@@ -14,8 +14,8 @@ Future<void> mostrarFormularioColaboracion(
 ) async {
   final formKey = GlobalKey<FormState>();
   final descripcionController = TextEditingController();
-  final clientes = ref.read(clientesStreamProvider).valueOrNull ?? [];
-  final reels = ref.read(reelsStreamProvider).valueOrNull ?? [];
+  final clientes = ref.read(clientesStreamProvider).value ?? [];
+  final reels = ref.read(reelsStreamProvider).value ?? [];
 
   if (clientes.isEmpty) return;
 

@@ -14,7 +14,7 @@ Future<void> mostrarFormularioReel(BuildContext context, WidgetRef ref) async {
   var categoria = CategoriaReel.ejemplo;
   String? clienteId;
 
-  final clientes = ref.read(clientesStreamProvider).valueOrNull ?? [];
+  final clientes = ref.read(clientesStreamProvider).value ?? [];
 
   await showDialog<void>(
     context: context,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../clientes/presentation/providers/cliente_providers.dart';
+import '../../domain/entities/colaboracion.dart';
 import '../providers/colaboracion_providers.dart';
 import '../widgets/formulario_colaboracion.dart';
 
@@ -11,7 +12,7 @@ class ColaboracionesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colaboracionesAsync = ref.watch(colaboracionesStreamProvider);
-    final clientes = ref.watch(clientesStreamProvider).valueOrNull ?? [];
+    final clientes = ref.watch(clientesStreamProvider).value ?? [];
 
     String nombreCliente(String clienteId) {
       for (final cliente in clientes) {

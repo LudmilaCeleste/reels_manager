@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/entities/reel.dart';
 import '../providers/reel_providers.dart';
 import '../widgets/formulario_reel.dart';
 import 'reel_reproductor_screen.dart';
