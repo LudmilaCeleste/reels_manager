@@ -7,18 +7,22 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 /// Client ID del cliente OAuth de tipo "Aplicación de escritorio" creado
-/// en Google Cloud Console (mismo proyecto que el de Firebase). No es un
-/// dato secreto: los clientes de tipo Desktop no usan client_secret — ver
-/// https://developers.google.com/identity/protocols/oauth2/native-app.
+/// en Google Cloud Console (mismo proyecto que el de Firebase).
 ///
-/// TODO: reemplazar por el Client ID real una vez creado en
-/// https://console.cloud.google.com/apis/credentials -> "Crear
-/// credenciales" -> "ID de cliente de OAuth" -> tipo "Aplicación de
-/// escritorio". Después hay que agregarlo también en Firebase Console,
-/// en Authentication -> Sign-in method -> Google -> "Web SDK
-/// configuration" -> "Authorized client IDs" (ver README.md).
+/// Configurado en Firebase Console -> Authentication -> Sign-in method ->
+/// Google -> "Web SDK configuration" -> "Authorized client IDs".
 const clientIdGoogleEscritorio =
     '695624267039-kmhunrucnj4s4noi6tphianu488go2lu.apps.googleusercontent.com';
+
+/// La documentación de Google dice que los clientes de tipo "Aplicación
+/// de escritorio" no necesitan client_secret (usan PKCE en su lugar) —
+/// ver https://developers.google.com/identity/protocols/oauth2/native-app.
+/// En la práctica, el endpoint de token de Google lo pide igual para
+/// este tipo de cliente (rechaza el intercambio con "client_secret is
+/// missing" si no se manda). No es un dato realmente confidencial para
+/// una app instalada: cualquiera que tenga el binario puede extraerlo,
+/// por eso Google no lo trata como un secreto de servidor.
+const _clientSecretGoogleEscritorio = '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';
 
 const _alcances = ['openid', 'email', 'profile'];
 
@@ -99,6 +103,7 @@ class GoogleOauthEscritorio {
         Uri.https('oauth2.googleapis.com', '/token'),
         body: {
           'client_id': clientIdGoogleEscritorio,
+          'client_secret': _clientSecretGoogleEscritorio,
           'code': codigo,
           'code_verifier': verificadorPkce,
           'grant_type': 'authorization_code',
