@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/colaboracion_repository_firestore.dart';
 import '../../domain/entities/colaboracion.dart';
 import '../../domain/repositories/colaboracion_repository.dart';
+import '../../domain/usecases/actualizar_colaboracion.dart';
 import '../../domain/usecases/agregar_colaboracion.dart';
+import '../../domain/usecases/eliminar_colaboracion.dart';
 import '../../domain/usecases/obtener_colaboraciones.dart';
 
 final colaboracionRepositoryProvider = Provider<ColaboracionRepository>((
@@ -18,6 +20,16 @@ final obtenerColaboracionesProvider = Provider<ObtenerColaboraciones>((ref) {
 
 final agregarColaboracionProvider = Provider<AgregarColaboracion>((ref) {
   return AgregarColaboracion(ref.watch(colaboracionRepositoryProvider));
+});
+
+final actualizarColaboracionProvider = Provider<ActualizarColaboracion>((
+  ref,
+) {
+  return ActualizarColaboracion(ref.watch(colaboracionRepositoryProvider));
+});
+
+final eliminarColaboracionProvider = Provider<EliminarColaboracion>((ref) {
+  return EliminarColaboracion(ref.watch(colaboracionRepositoryProvider));
 });
 
 final colaboracionesStreamProvider = StreamProvider<List<Colaboracion>>((

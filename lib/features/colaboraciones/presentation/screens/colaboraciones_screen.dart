@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/widgets/confirmar_eliminacion.dart';
 import '../../../clientes/presentation/providers/cliente_providers.dart';
-import '../../domain/entities/colaboracion.dart';
 import '../providers/colaboracion_providers.dart';
 import '../widgets/formulario_colaboracion.dart';
 
@@ -44,7 +44,50 @@ class ColaboracionesScreen extends ConsumerWidget {
                   leading: const Icon(Icons.handshake_outlined, size: 28),
                   title: Text(nombreCliente(colaboracion.clienteId)),
                   subtitle: Text(colaboracion.descripcion),
-                  trailing: Chip(label: Text(colaboracion.estado.etiqueta)),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Chip(label: Text(colaboracion.estado.etiqueta)),
+                      PopupMenuButton<String>(
+                        tooltip: 'Más opciones',
+                        onSelected: (opcion) async {
+                          if (opcion == 'editar') {
+                            await mostrarFormularioColaboracion(
+                              context,
+                              ref,
+                              existente: colaboracion,
+                            );
+                          } else if (opcion == 'eliminar') {
+                            final confirmado = await confirmarEliminacion(
+                              context,
+                              titulo: '¿Eliminar esta colaboración?',
+                            );
+                            if (confirmado) {
+                              await ref.read(eliminarColaboracionProvider)(
+                                colaboracion.id,
+                              );
+                            }
+                          }
+                        },
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(
+                            value: 'editar',
+                            child: ListTile(
+                              leading: Icon(Icons.edit_outlined),
+                              title: Text('Editar'),
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'eliminar',
+                            child: ListTile(
+                              leading: Icon(Icons.delete_outline),
+                              title: Text('Eliminar'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

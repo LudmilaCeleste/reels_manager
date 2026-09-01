@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/calendario_repository_firestore.dart';
 import '../../domain/entities/evento_calendario.dart';
 import '../../domain/repositories/calendario_repository.dart';
+import '../../domain/usecases/actualizar_evento.dart';
 import '../../domain/usecases/agregar_evento.dart';
 import '../../domain/usecases/eliminar_evento.dart';
 import '../../domain/usecases/obtener_eventos.dart';
@@ -17,6 +18,10 @@ final obtenerEventosProvider = Provider<ObtenerEventos>((ref) {
 
 final agregarEventoProvider = Provider<AgregarEvento>((ref) {
   return AgregarEvento(ref.watch(calendarioRepositoryProvider));
+});
+
+final actualizarEventoProvider = Provider<ActualizarEvento>((ref) {
+  return ActualizarEvento(ref.watch(calendarioRepositoryProvider));
 });
 
 final eliminarEventoProvider = Provider<EliminarEvento>((ref) {

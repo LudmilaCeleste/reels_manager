@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/widgets/confirmar_eliminacion.dart';
 import '../providers/cliente_providers.dart';
 import '../utils/instagram_links.dart';
 import '../widgets/formulario_cliente.dart';
@@ -43,29 +44,67 @@ class ClientesScreen extends ConsumerWidget {
                           ],
                         )
                       : null,
-                  trailing: tieneInstagram
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.chat_bubble_outline),
-                              tooltip: 'Mandar mensaje por Instagram',
-                              onPressed: () => launchUrl(
-                                linkMensajeInstagram(cliente.instagram),
-                                mode: LaunchMode.externalApplication,
-                              ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (tieneInstagram) ...[
+                        IconButton(
+                          icon: const Icon(Icons.chat_bubble_outline),
+                          tooltip: 'Mandar mensaje por Instagram',
+                          onPressed: () => launchUrl(
+                            linkMensajeInstagram(cliente.instagram),
+                            mode: LaunchMode.externalApplication,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.open_in_new),
+                          tooltip: 'Ver perfil de Instagram',
+                          onPressed: () => launchUrl(
+                            linkPerfilInstagram(cliente.instagram),
+                            mode: LaunchMode.externalApplication,
+                          ),
+                        ),
+                      ],
+                      PopupMenuButton<String>(
+                        tooltip: 'Más opciones',
+                        onSelected: (opcion) async {
+                          if (opcion == 'editar') {
+                            await mostrarFormularioCliente(
+                              context,
+                              ref,
+                              existente: cliente,
+                            );
+                          } else if (opcion == 'eliminar') {
+                            final confirmado = await confirmarEliminacion(
+                              context,
+                              titulo: '¿Eliminar a ${cliente.nombre}?',
+                            );
+                            if (confirmado) {
+                              await ref.read(eliminarClienteProvider)(
+                                cliente.id,
+                              );
+                            }
+                          }
+                        },
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(
+                            value: 'editar',
+                            child: ListTile(
+                              leading: Icon(Icons.edit_outlined),
+                              title: Text('Editar'),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.open_in_new),
-                              tooltip: 'Ver perfil de Instagram',
-                              onPressed: () => launchUrl(
-                                linkPerfilInstagram(cliente.instagram),
-                                mode: LaunchMode.externalApplication,
-                              ),
+                          ),
+                          PopupMenuItem(
+                            value: 'eliminar',
+                            child: ListTile(
+                              leading: Icon(Icons.delete_outline),
+                              title: Text('Eliminar'),
                             ),
-                          ],
-                        )
-                      : null,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

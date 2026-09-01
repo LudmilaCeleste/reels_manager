@@ -6,28 +6,33 @@ import '../../../reels/presentation/providers/reel_providers.dart';
 import '../../domain/entities/colaboracion.dart';
 import '../providers/colaboracion_providers.dart';
 
-/// Diálogo para cargar una colaboración nueva. Requiere elegir un cliente
-/// (tiene que haber al menos uno cargado); el reel asociado es opcional.
+/// Diálogo para cargar una colaboración nueva, o editar una existente si
+/// se pasa `existente`. Requiere elegir un cliente (tiene que haber al
+/// menos uno cargado); el reel asociado es opcional.
 Future<void> mostrarFormularioColaboracion(
   BuildContext context,
-  WidgetRef ref,
-) async {
+  WidgetRef ref, {
+  Colaboracion? existente,
+}) async {
   final formKey = GlobalKey<FormState>();
-  final descripcionController = TextEditingController();
+  final descripcionController = TextEditingController(
+    text: existente?.descripcion,
+  );
   final clientes = ref.read(clientesStreamProvider).value ?? [];
   final reels = ref.read(reelsStreamProvider).value ?? [];
+  final esEdicion = existente != null;
 
   if (clientes.isEmpty) return;
 
-  var clienteId = clientes.first.id;
-  String? reelId;
-  var estado = EstadoColaboracion.propuesta;
+  var clienteId = existente?.clienteId ?? clientes.first.id;
+  String? reelId = existente?.reelId;
+  var estado = existente?.estado ?? EstadoColaboracion.propuesta;
 
   await showDialog<void>(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-        title: const Text('Nueva colaboración'),
+        title: Text(esEdicion ? 'Editar colaboración' : 'Nueva colaboración'),
         content: SingleChildScrollView(
           child: Form(
             key: formKey,
@@ -101,15 +106,25 @@ Future<void> mostrarFormularioColaboracion(
           FilledButton(
             onPressed: () async {
               if (!(formKey.currentState?.validate() ?? false)) return;
-              await ref.read(agregarColaboracionProvider)(
-                clienteId: clienteId,
-                descripcion: descripcionController.text,
-                estado: estado,
-                reelId: reelId,
-              );
+              if (esEdicion) {
+                await ref.read(actualizarColaboracionProvider)(
+                  id: existente.id,
+                  clienteId: clienteId,
+                  descripcion: descripcionController.text,
+                  estado: estado,
+                  reelId: reelId,
+                );
+              } else {
+                await ref.read(agregarColaboracionProvider)(
+                  clienteId: clienteId,
+                  descripcion: descripcionController.text,
+                  estado: estado,
+                  reelId: reelId,
+                );
+              }
               if (context.mounted) Navigator.of(context).pop();
             },
-            child: const Text('Guardar'),
+            child: Text(esEdicion ? 'Actualizar' : 'Guardar'),
           ),
         ],
       ),

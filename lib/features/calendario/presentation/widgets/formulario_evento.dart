@@ -2,22 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../clientes/presentation/providers/cliente_providers.dart';
+import '../../domain/entities/evento_calendario.dart';
 import '../providers/calendario_providers.dart';
 
-/// Diálogo para cargar un evento nuevo en el calendario compartido.
-/// `fechaInicial` es el día que estaba seleccionado en el calendario
-/// cuando se apretó "+", para no tener que volver a elegirlo si ya es
-/// el correcto.
+/// Diálogo para cargar un evento nuevo en el calendario compartido, o
+/// editar uno existente si se pasa `existente`. `fechaInicial` es el día
+/// que estaba seleccionado en el calendario (o la fecha del evento, si
+/// se está editando), para no tener que volver a elegirlo si ya es el
+/// correcto.
 Future<void> mostrarFormularioEvento(
   BuildContext context,
   WidgetRef ref, {
   required DateTime fechaInicial,
+  EventoCalendario? existente,
 }) async {
   final formKey = GlobalKey<FormState>();
-  final tituloController = TextEditingController();
-  final descripcionController = TextEditingController();
+  final tituloController = TextEditingController(text: existente?.titulo);
+  final descripcionController = TextEditingController(
+    text: existente?.descripcion,
+  );
   var fecha = fechaInicial;
-  String? clienteId;
+  String? clienteId = existente?.clienteId;
+  final esEdicion = existente != null;
 
   final clientes = ref.read(clientesStreamProvider).value ?? [];
 
@@ -25,7 +31,7 @@ Future<void> mostrarFormularioEvento(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-        title: const Text('Nuevo evento'),
+        title: Text(esEdicion ? 'Editar evento' : 'Nuevo evento'),
         content: SingleChildScrollView(
           child: Form(
             key: formKey,
@@ -98,15 +104,25 @@ Future<void> mostrarFormularioEvento(
           FilledButton(
             onPressed: () async {
               if (!(formKey.currentState?.validate() ?? false)) return;
-              await ref.read(agregarEventoProvider)(
-                titulo: tituloController.text,
-                fecha: fecha,
-                descripcion: descripcionController.text,
-                clienteId: clienteId,
-              );
+              if (esEdicion) {
+                await ref.read(actualizarEventoProvider)(
+                  id: existente.id,
+                  titulo: tituloController.text,
+                  fecha: fecha,
+                  descripcion: descripcionController.text,
+                  clienteId: clienteId,
+                );
+              } else {
+                await ref.read(agregarEventoProvider)(
+                  titulo: tituloController.text,
+                  fecha: fecha,
+                  descripcion: descripcionController.text,
+                  clienteId: clienteId,
+                );
+              }
               if (context.mounted) Navigator.of(context).pop();
             },
-            child: const Text('Guardar'),
+            child: Text(esEdicion ? 'Actualizar' : 'Guardar'),
           ),
         ],
       ),

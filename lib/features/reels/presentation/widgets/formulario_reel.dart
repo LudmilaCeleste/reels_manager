@@ -5,14 +5,22 @@ import '../../../clientes/presentation/providers/cliente_providers.dart';
 import '../../domain/entities/reel.dart';
 import '../providers/reel_providers.dart';
 
-/// Diálogo para guardar un reel nuevo: link, descripción, categoría y,
-/// opcionalmente, a qué cliente pertenece.
-Future<void> mostrarFormularioReel(BuildContext context, WidgetRef ref) async {
+/// Diálogo para guardar un reel nuevo, o editar uno existente si se pasa
+/// `existente`: link, descripción, categoría y, opcionalmente, a qué
+/// cliente pertenece.
+Future<void> mostrarFormularioReel(
+  BuildContext context,
+  WidgetRef ref, {
+  Reel? existente,
+}) async {
   final formKey = GlobalKey<FormState>();
-  final urlController = TextEditingController();
-  final descripcionController = TextEditingController();
-  var categoria = CategoriaReel.ejemplo;
-  String? clienteId;
+  final urlController = TextEditingController(text: existente?.urlInstagram);
+  final descripcionController = TextEditingController(
+    text: existente?.descripcion,
+  );
+  var categoria = existente?.categoria ?? CategoriaReel.ejemplo;
+  String? clienteId = existente?.clienteId;
+  final esEdicion = existente != null;
 
   final clientes = ref.read(clientesStreamProvider).value ?? [];
 
@@ -20,7 +28,7 @@ Future<void> mostrarFormularioReel(BuildContext context, WidgetRef ref) async {
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-        title: const Text('Nuevo reel'),
+        title: Text(esEdicion ? 'Editar reel' : 'Nuevo reel'),
         content: SingleChildScrollView(
           child: Form(
             key: formKey,
@@ -81,12 +89,22 @@ Future<void> mostrarFormularioReel(BuildContext context, WidgetRef ref) async {
             onPressed: () async {
               if (!(formKey.currentState?.validate() ?? false)) return;
               try {
-                await ref.read(guardarReelProvider)(
-                  urlInstagram: urlController.text,
-                  descripcion: descripcionController.text,
-                  categoria: categoria,
-                  clienteId: clienteId,
-                );
+                if (esEdicion) {
+                  await ref.read(actualizarReelProvider)(
+                    id: existente.id,
+                    urlInstagram: urlController.text,
+                    descripcion: descripcionController.text,
+                    categoria: categoria,
+                    clienteId: clienteId,
+                  );
+                } else {
+                  await ref.read(guardarReelProvider)(
+                    urlInstagram: urlController.text,
+                    descripcion: descripcionController.text,
+                    categoria: categoria,
+                    clienteId: clienteId,
+                  );
+                }
                 if (context.mounted) Navigator.of(context).pop();
               } on ArgumentError catch (e) {
                 if (context.mounted) {
@@ -96,7 +114,7 @@ Future<void> mostrarFormularioReel(BuildContext context, WidgetRef ref) async {
                 }
               }
             },
-            child: const Text('Guardar'),
+            child: Text(esEdicion ? 'Actualizar' : 'Guardar'),
           ),
         ],
       ),

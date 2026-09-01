@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/cliente_repository_firestore.dart';
 import '../../domain/entities/cliente.dart';
 import '../../domain/repositories/cliente_repository.dart';
+import '../../domain/usecases/actualizar_cliente.dart';
 import '../../domain/usecases/agregar_cliente.dart';
+import '../../domain/usecases/eliminar_cliente.dart';
 import '../../domain/usecases/obtener_clientes.dart';
 
 /// Repositorio de clientes usado por toda la app: implementación real
@@ -19,6 +21,14 @@ final obtenerClientesProvider = Provider<ObtenerClientes>((ref) {
 
 final agregarClienteProvider = Provider<AgregarCliente>((ref) {
   return AgregarCliente(ref.watch(clienteRepositoryProvider));
+});
+
+final actualizarClienteProvider = Provider<ActualizarCliente>((ref) {
+  return ActualizarCliente(ref.watch(clienteRepositoryProvider));
+});
+
+final eliminarClienteProvider = Provider<EliminarCliente>((ref) {
+  return EliminarCliente(ref.watch(clienteRepositoryProvider));
 });
 
 /// Lista de clientes en tiempo real, lista para usar en la UI.

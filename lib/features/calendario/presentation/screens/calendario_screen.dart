@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../../core/widgets/confirmar_eliminacion.dart';
 import '../../domain/entities/evento_calendario.dart';
 import '../providers/calendario_providers.dart';
 import '../widgets/formulario_evento.dart';
@@ -99,12 +100,46 @@ class _CalendarioScreenState extends ConsumerState<CalendarioScreen> {
                               subtitle: evento.descripcion.isEmpty
                                   ? null
                                   : Text(evento.descripcion),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                tooltip: 'Eliminar',
-                                onPressed: () => ref.read(
-                                  eliminarEventoProvider,
-                                )(evento.id),
+                              trailing: PopupMenuButton<String>(
+                                tooltip: 'Más opciones',
+                                onSelected: (opcion) async {
+                                  if (opcion == 'editar') {
+                                    await mostrarFormularioEvento(
+                                      context,
+                                      ref,
+                                      fechaInicial: evento.fecha,
+                                      existente: evento,
+                                    );
+                                  } else if (opcion == 'eliminar') {
+                                    final confirmado =
+                                        await confirmarEliminacion(
+                                          context,
+                                          titulo:
+                                              '¿Eliminar "${evento.titulo}"?',
+                                        );
+                                    if (confirmado) {
+                                      await ref.read(eliminarEventoProvider)(
+                                        evento.id,
+                                      );
+                                    }
+                                  }
+                                },
+                                itemBuilder: (context) => const [
+                                  PopupMenuItem(
+                                    value: 'editar',
+                                    child: ListTile(
+                                      leading: Icon(Icons.edit_outlined),
+                                      title: Text('Editar'),
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'eliminar',
+                                    child: ListTile(
+                                      leading: Icon(Icons.delete_outline),
+                                      title: Text('Eliminar'),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           );

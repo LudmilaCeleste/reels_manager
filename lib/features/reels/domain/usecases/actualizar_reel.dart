@@ -2,15 +2,15 @@ import '../entities/reel.dart';
 import '../repositories/reel_repository.dart';
 import 'validaciones_reel.dart';
 
-/// Caso de uso: guardar un reel nuevo. Valida que el link sea realmente
-/// de instagram.com antes de guardarlo, para no terminar cargando
-/// contenido arbitrario en el visor embebido.
-class GuardarReel {
-  GuardarReel(this._repository);
+/// Caso de uso: modificar un reel ya existente. Reutiliza la misma
+/// validación de link que `GuardarReel`.
+class ActualizarReel {
+  ActualizarReel(this._repository);
 
   final ReelRepository _repository;
 
   Future<void> call({
+    required String id,
     required String urlInstagram,
     required String descripcion,
     required CategoriaReel categoria,
@@ -22,8 +22,7 @@ class GuardarReel {
     }
 
     final reel = Reel(
-      // TODO(firebase): con Firestore, el id lo genera la propia base.
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      id: id,
       urlInstagram: url,
       descripcion: descripcion.trim(),
       categoria: categoria,
