@@ -23,20 +23,23 @@ class ReelsScreen extends ConsumerWidget {
             );
           }
           return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: reels.length,
             itemBuilder: (context, index) {
               final reel = reels[index];
-              return ListTile(
-                leading: const Icon(Icons.play_circle_outline),
-                title: Text(
-                  reel.descripcion.isEmpty
-                      ? reel.urlInstagram
-                      : reel.descripcion,
-                ),
-                subtitle: Text(reel.categoria.etiqueta),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ReelReproductorScreen(reel: reel),
+              return Card(
+                child: ListTile(
+                  leading: const Icon(Icons.play_circle_outline, size: 28),
+                  title: Text(
+                    reel.descripcion.isEmpty
+                        ? reel.urlInstagram
+                        : reel.descripcion,
+                  ),
+                  subtitle: Text(reel.categoria.etiqueta),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ReelReproductorScreen(reel: reel),
+                    ),
                   ),
                 ),
               );

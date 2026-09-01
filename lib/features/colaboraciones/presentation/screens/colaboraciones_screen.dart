@@ -35,14 +35,17 @@ class ColaboracionesScreen extends ConsumerWidget {
             );
           }
           return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: colaboraciones.length,
             itemBuilder: (context, index) {
               final colaboracion = colaboraciones[index];
-              return ListTile(
-                leading: const Icon(Icons.handshake_outlined),
-                title: Text(nombreCliente(colaboracion.clienteId)),
-                subtitle: Text(colaboracion.descripcion),
-                trailing: Chip(label: Text(colaboracion.estado.etiqueta)),
+              return Card(
+                child: ListTile(
+                  leading: const Icon(Icons.handshake_outlined, size: 28),
+                  title: Text(nombreCliente(colaboracion.clienteId)),
+                  subtitle: Text(colaboracion.descripcion),
+                  trailing: Chip(label: Text(colaboracion.estado.etiqueta)),
+                ),
               );
             },
           );

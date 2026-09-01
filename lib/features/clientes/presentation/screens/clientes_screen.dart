@@ -21,13 +21,18 @@ class ClientesScreen extends ConsumerWidget {
             );
           }
           return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: clientes.length,
             itemBuilder: (context, index) {
               final cliente = clientes[index];
-              return ListTile(
-                leading: const Icon(Icons.person_outline),
-                title: Text(cliente.nombre),
-                subtitle: cliente.notas.isEmpty ? null : Text(cliente.notas),
+              return Card(
+                child: ListTile(
+                  leading: const Icon(Icons.person_outline, size: 28),
+                  title: Text(cliente.nombre),
+                  subtitle: cliente.notas.isEmpty
+                      ? null
+                      : Text(cliente.notas),
+                ),
               );
             },
           );
