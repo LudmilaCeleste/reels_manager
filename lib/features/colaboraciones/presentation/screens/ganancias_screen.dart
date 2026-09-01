@@ -6,10 +6,11 @@ import '../../domain/entities/colaboracion.dart';
 import '../../domain/usecases/calcular_totales.dart';
 import '../providers/colaboracion_providers.dart';
 
-/// Resumen de plata: cuánto ya se ganó (colaboraciones confirmadas o
-/// publicadas) y cuánto hay todavía en propuestas sin cerrar, calculado
-/// a partir de las mismas colaboraciones cargadas — no es una colección
-/// aparte en Firestore, se recalcula solo cuando algo cambia.
+/// Resumen de plata: cuánto se ganó en total con las colaboraciones
+/// cargadas (todas están confirmadas o publicadas — no hay estado de
+/// propuesta sin cerrar), calculado a partir de las mismas
+/// colaboraciones — no es una colección aparte en Firestore, se
+/// recalcula solo cuando algo cambia.
 class GananciasScreen extends ConsumerWidget {
   const GananciasScreen({super.key});
 
@@ -33,23 +34,12 @@ class GananciasScreen extends ConsumerWidget {
               _TarjetaTotal(
                 titulo: 'Total ganado',
                 subtitulo: totales.cantidadGanado == 0
-                    ? 'Todavía no hay colaboraciones confirmadas o publicadas con precio cargado.'
-                    : 'De ${totales.cantidadGanado} colaboración${totales.cantidadGanado == 1 ? '' : 'es'} confirmada${totales.cantidadGanado == 1 ? '' : 's'} o publicada${totales.cantidadGanado == 1 ? '' : 's'}.',
+                    ? 'Todavía no hay colaboraciones con precio cargado.'
+                    : 'De ${totales.cantidadGanado} colaboración${totales.cantidadGanado == 1 ? '' : 'es'} con precio cargado.',
                 monto: totales.totalGanado,
                 colorFondo: colorScheme.primary,
                 colorTexto: colorScheme.onPrimary,
                 icono: Icons.paid_outlined,
-              ),
-              const SizedBox(height: 20),
-              _TarjetaTotal(
-                titulo: 'En propuesta',
-                subtitulo: totales.cantidadPropuesto == 0
-                    ? 'No hay propuestas con precio cargado todavía.'
-                    : 'De ${totales.cantidadPropuesto} propuesta${totales.cantidadPropuesto == 1 ? '' : 's'} sin cerrar.',
-                monto: totales.totalPropuesto,
-                colorFondo: colorScheme.secondaryContainer,
-                colorTexto: colorScheme.onSecondaryContainer,
-                icono: Icons.hourglass_empty_outlined,
               ),
               const SizedBox(height: 28),
               if (conPrecio.isEmpty)

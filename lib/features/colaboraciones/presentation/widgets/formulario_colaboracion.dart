@@ -35,7 +35,9 @@ Future<void> mostrarFormularioColaboracion(
   final esEdicion = existente != null;
 
   String? reelId = existente?.reelId;
-  var estado = existente?.estado ?? EstadoColaboracion.propuesta;
+  // El equipo solo carga una colaboración cuando ya está cerrada, así
+  // que arranca en "Confirmada" (ya no existe un estado de propuesta).
+  var estado = existente?.estado ?? EstadoColaboracion.confirmada;
   DateTime? fecha = existente?.fecha;
 
   await showDialog<void>(

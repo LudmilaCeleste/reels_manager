@@ -1,10 +1,12 @@
 import 'package:equatable/equatable.dart';
 
-enum EstadoColaboracion { propuesta, confirmada, publicada }
+/// El equipo solo carga una colaboración una vez que ya está cerrada
+/// con el cliente — no se anotan propuestas sueltas todavía sin
+/// confirmar. Por eso acá solo hay dos estados posibles.
+enum EstadoColaboracion { confirmada, publicada }
 
 extension EstadoColaboracionLabel on EstadoColaboracion {
   String get etiqueta => switch (this) {
-    EstadoColaboracion.propuesta => 'Propuesta',
     EstadoColaboracion.confirmada => 'Confirmada',
     EstadoColaboracion.publicada => 'Publicada',
   };
@@ -37,12 +39,12 @@ class Colaboracion extends Equatable {
   final String? reelId;
 
   /// Precio acordado con el cliente, si ya se cargó. Es opcional porque
-  /// una propuesta recién armada puede no tener un número todavía.
+  /// una colaboración recién armada puede no tener un número todavía.
   final double? precio;
 
   /// Fecha en la que se hace la colaboración (grabación, publicación,
   /// reunión, lo que corresponda). Opcional por el mismo motivo que el
-  /// precio: una propuesta puede no tener fecha todavía.
+  /// precio: puede no tener fecha todavía.
   final DateTime? fecha;
 
   @override

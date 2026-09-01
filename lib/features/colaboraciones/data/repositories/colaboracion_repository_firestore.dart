@@ -50,9 +50,11 @@ class ColaboracionRepositoryFirestore implements ColaboracionRepository {
       instagramCliente: datos['instagramCliente'] as String? ?? '',
       notasCliente: datos['notasCliente'] as String? ?? '',
       descripcion: datos['descripcion'] as String? ?? '',
+      // Si un documento viejo quedó con el estado "propuesta" (ya no
+      // existe como opción), se lee como confirmada en vez de romper.
       estado: EstadoColaboracion.values.firstWhere(
         (e) => e.name == datos['estado'],
-        orElse: () => EstadoColaboracion.propuesta,
+        orElse: () => EstadoColaboracion.confirmada,
       ),
       reelId: datos['reelId'] as String?,
       precio: (datos['precio'] as num?)?.toDouble(),
