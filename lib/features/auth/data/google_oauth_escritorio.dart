@@ -18,7 +18,7 @@ import 'package:url_launcher/url_launcher.dart';
 /// en Authentication -> Sign-in method -> Google -> "Web SDK
 /// configuration" -> "Authorized client IDs" (ver README.md).
 const clientIdGoogleEscritorio =
-    'PONE_ACA_TU_CLIENT_ID.apps.googleusercontent.com';
+    '695624267039-kmhunrucnj4s4noi6tphianu488go2lu.apps.googleusercontent.com';
 
 const _alcances = ['openid', 'email', 'profile'];
 
