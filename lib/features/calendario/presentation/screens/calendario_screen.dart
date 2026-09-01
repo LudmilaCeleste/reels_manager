@@ -16,7 +16,9 @@ import '../widgets/formulario_evento.dart';
 /// agrandan según el alto real del mes que se está mostrando) y el mes
 /// actual se destaca en un rectángulo de color arriba. La info de cada
 /// día ya no vive siempre visible abajo: aparece en una hoja que sube
-/// desde abajo al tocar el día.
+/// desde abajo al tocar el día. Los días con algo cargado se destacan
+/// con un círculo relleno bien visible (no solo un puntito chico como
+/// al principio), para que salten a la vista de un vistazo.
 class CalendarioScreen extends ConsumerStatefulWidget {
   const CalendarioScreen({super.key});
 
@@ -53,6 +55,9 @@ class _CalendarioScreenState extends ConsumerState<CalendarioScreen> {
   Widget build(BuildContext context) {
     final eventosAsync = ref.watch(eventosStreamProvider);
     final colorScheme = Theme.of(context).colorScheme;
+    // Color bien distinto del verde agua de la marca a propósito: tiene
+    // que saltar a la vista entre semanas enteras de días "normales".
+    final colorEvento = colorScheme.error;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Calendario')),
@@ -77,6 +82,11 @@ class _CalendarioScreenState extends ConsumerState<CalendarioScreen> {
                                 alturaEncabezado) /
                             semanas)
                         .clamp(56.0, 140.0);
+                // El círculo que destaca un día con algo cargado se
+                // dimensiona según el alto real de la fila, para que en
+                // meses con filas grandes (4-5 semanas) se vea proporcional
+                // y no quede perdido.
+                final tamanioMarca = (alturaFila * 0.62).clamp(34.0, 56.0);
 
                 return SingleChildScrollView(
                   physics: const ClampingScrollPhysics(),
@@ -135,11 +145,77 @@ class _CalendarioScreenState extends ConsumerState<CalendarioScreen> {
                         color: colorScheme.primary,
                         shape: BoxShape.circle,
                       ),
-                      markerDecoration: BoxDecoration(
-                        color: colorScheme.tertiary,
-                        shape: BoxShape.circle,
-                      ),
-                      markerSize: 6,
+                    ),
+                    // Un día con algo cargado ya no se marca con un
+                    // puntito chico abajo del número: se dibuja el
+                    // número entero sobre un círculo relleno de color,
+                    // igual de protagonista que el círculo de "hoy" o
+                    // "seleccionado". Si además es hoy o está
+                    // seleccionado, esos dos tienen prioridad (siguen
+                    // viéndose como siempre) y acá solo se agrega un
+                    // punto abajo para no perder la señal.
+                    calendarBuilders: CalendarBuilders<EventoCalendario>(
+                      // Sin esto, TableCalendar además dibuja su propio
+                      // puntito de marcador (chiquito, color por
+                      // defecto) superpuesto a los círculos de acá
+                      // abajo — quedaría un marcador duplicado y
+                      // desprolijo. Como el círculo/punto ya lo
+                      // dibujan los builders de abajo, este se anula.
+                      markerBuilder: (context, dia, eventosDelDia) =>
+                          const SizedBox.shrink(),
+                      defaultBuilder: (context, dia, diaEnfocado) {
+                        final tieneAlgoCargado =
+                            (eventosPorDia[_soloFecha(dia)] ?? [])
+                                .isNotEmpty;
+                        if (!tieneAlgoCargado) return null;
+                        return Center(
+                          child: Container(
+                            width: tamanioMarca,
+                            height: tamanioMarca,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: colorEvento,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              '${dia.day}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      todayBuilder: (context, dia, diaEnfocado) {
+                        final tieneAlgoCargado =
+                            (eventosPorDia[_soloFecha(dia)] ?? [])
+                                .isNotEmpty;
+                        if (!tieneAlgoCargado) return null;
+                        return _diaConPuntoDebajo(
+                          numero: '${dia.day}',
+                          colorFondo: colorScheme.primary.withValues(
+                            alpha: 0.45,
+                          ),
+                          colorTexto: Colors.white,
+                          colorPunto: colorEvento,
+                          tamanio: tamanioMarca,
+                        );
+                      },
+                      selectedBuilder: (context, dia, diaEnfocado) {
+                        final tieneAlgoCargado =
+                            (eventosPorDia[_soloFecha(dia)] ?? [])
+                                .isNotEmpty;
+                        if (!tieneAlgoCargado) return null;
+                        return _diaConPuntoDebajo(
+                          numero: '${dia.day}',
+                          colorFondo: colorScheme.primary,
+                          colorTexto: Colors.white,
+                          colorPunto: colorEvento,
+                          tamanio: tamanioMarca,
+                        );
+                      },
                     ),
                     headerStyle: HeaderStyle(
                       formatButtonVisible: false,
@@ -181,6 +257,52 @@ class _CalendarioScreenState extends ConsumerState<CalendarioScreen> {
         ),
         tooltip: 'Nuevo evento',
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  /// El día de "hoy" y el día "seleccionado" ya tienen su propio círculo
+  /// de fondo (celeste/verde) que no hay que taparle. Cuando además
+  /// tienen algo cargado, se les agrega un puntito de color abajo del
+  /// número en vez de reemplazar todo el círculo, para no perder esas
+  /// dos señales a la vez.
+  Widget _diaConPuntoDebajo({
+    required String numero,
+    required Color colorFondo,
+    required Color colorTexto,
+    required Color colorPunto,
+    required double tamanio,
+  }) {
+    return Center(
+      child: Container(
+        width: tamanio,
+        height: tamanio,
+        decoration: BoxDecoration(color: colorFondo, shape: BoxShape.circle),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Text(
+              numero,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: colorTexto,
+              ),
+            ),
+            Positioned(
+              bottom: tamanio * 0.12,
+              child: Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: colorPunto,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colorFondo, width: 1.2),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
