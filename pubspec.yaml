@@ -2,7 +2,7 @@ name: reels_manager
 description: "App para guardar y organizar reels de Instagram: clientes, ejemplos y colaboraciones, con reproduccion del video desde el link."
 publish_to: 'none'
 
-version: 0.1.0+1
+version: 0.2.0+1
 
 environment:
   sdk: ^3.9.2
@@ -20,12 +20,16 @@ dependencies:
   # Reproduccion de reels embebidos (mismo paquete en Windows, Android e iOS)
   flutter_inappwebview: ^6.1.5
 
-  # Backend. Las dependencias ya estan listas; la conexion real
-  # (firebase_options.dart via flutterfire configure) se hace en el
-  # siguiente paso, cuando creemos el proyecto de Firebase.
+  # Backend
   firebase_core: ^4.14.0
   firebase_auth: ^6.6.1
   cloud_firestore: ^6.9.0
+
+  # Login con Google en escritorio (flujo manual, ver
+  # lib/features/auth/data/google_oauth_escritorio.dart)
+  url_launcher: ^6.3.2
+  http: ^1.6.0
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:

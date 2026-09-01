@@ -1,12 +1,10 @@
 import '../entities/usuario.dart';
 
-/// Contrato para la autenticación. Se implementa con Firebase Auth cuando
-/// conectemos el proyecto de Firebase (ver docs/ARCHITECTURE.md).
+/// Contrato para la autenticación. Implementado con Firebase Auth +
+/// Google Sign-In (ver docs/ARCHITECTURE.md, y el comentario en
+/// `google_oauth_escritorio.dart` para el detalle del flujo en Windows).
 abstract class AuthRepository {
   Stream<Usuario?> observarUsuarioActual();
-  Future<void> iniciarSesion({
-    required String email,
-    required String contrasena,
-  });
+  Future<void> iniciarSesionConGoogle();
   Future<void> cerrarSesion();
 }

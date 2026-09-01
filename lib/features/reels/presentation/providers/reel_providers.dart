@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/repositories/reel_repository_memoria.dart';
+import '../../data/repositories/reel_repository_firestore.dart';
 import '../../domain/entities/reel.dart';
 import '../../domain/repositories/reel_repository.dart';
 import '../../domain/usecases/guardar_reel.dart';
 import '../../domain/usecases/obtener_reels.dart';
 
 final reelRepositoryProvider = Provider<ReelRepository>((ref) {
-  return ReelRepositoryMemoria();
+  return ReelRepositoryFirestore();
 });
 
 final obtenerReelsProvider = Provider<ObtenerReels>((ref) {

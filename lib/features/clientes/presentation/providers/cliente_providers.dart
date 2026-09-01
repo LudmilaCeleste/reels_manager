@@ -1,16 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/repositories/cliente_repository_memoria.dart';
+import '../../data/repositories/cliente_repository_firestore.dart';
 import '../../domain/entities/cliente.dart';
 import '../../domain/repositories/cliente_repository.dart';
 import '../../domain/usecases/agregar_cliente.dart';
 import '../../domain/usecases/obtener_clientes.dart';
 
-/// Repositorio de clientes usado por toda la app.
-/// HOY: implementación en memoria. Cuando conectemos Firebase, este es el
-/// único lugar que hay que tocar para pasar a Firestore.
+/// Repositorio de clientes usado por toda la app: implementación real
+/// con Cloud Firestore. Si algún día hiciera falta otra fuente de datos,
+/// este es el único lugar que hay que tocar.
 final clienteRepositoryProvider = Provider<ClienteRepository>((ref) {
-  return ClienteRepositoryMemoria();
+  return ClienteRepositoryFirestore();
 });
 
 final obtenerClientesProvider = Provider<ObtenerClientes>((ref) {

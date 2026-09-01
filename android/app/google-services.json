@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "695624267039",
+    "project_id": "app-marketing-aguscele",
+    "storage_bucket": "app-marketing-aguscele.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:695624267039:android:acaaf6562517b7367d6c2a",
+        "android_client_info": {
+          "package_name": "com.reelsmanager.reels_manager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVCIZnwUEHmoTa6lmg38XLqSxhNq92vRs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
