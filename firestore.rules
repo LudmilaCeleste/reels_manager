@@ -1,17 +1,30 @@
 rules_version = '2';
 
-// Reglas de arranque: cualquier usuario autenticado (con cuenta de Google
-// dada de alta en el proyecto) puede leer y escribir. Es intencionalmente
-// simple para esta primera etapa, con un equipo chico y de confianza.
-// Cuando haga falta distinguir roles (por ejemplo, que no cualquiera
-// pueda borrar clientes), se ajusta acá.
+// Solo el equipo (agus + Cele) puede leer y escribir: se valida el
+// email de la cuenta de Google autenticada contra una lista fija, para
+// que la base no quede abierta a cualquier cuenta de Google aunque el
+// proyecto de OAuth esté en modo "producción" (sin filtro de test
+// users) en Google Cloud Console.
+//
+// Mantener la lista de abajo sincronizada con
+// lib/core/config/equipo_autorizado.dart (ver el comentario ahí para
+// los tres lugares que hay que tocar si se agrega o saca a alguien).
 //
 // Cómo aplicarlas: Firebase Console -> Firestore Database -> pestaña
 // "Rules" -> pegar este contenido -> Publish.
 service cloud.firestore {
   match /databases/{database}/documents {
+    function esUsuarioDelEquipo() {
+      return request.auth != null &&
+        request.auth.token.email_verified == true &&
+        request.auth.token.email in [
+          'aguscatbernal@gmail.com',
+          'laroccaceleste73@gmail.com'
+        ];
+    }
+
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if esUsuarioDelEquipo();
     }
   }
 }

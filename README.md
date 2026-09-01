@@ -20,6 +20,15 @@ Identidad visual: color de marca verde agua (`colorMarca` en `lib/core/theme/app
 4. Agregar el Client ID también en Firebase Console → Authentication → Sign-in method → Google → "Web SDK configuration" → "Authorized client IDs".
 5. Publicar las reglas de Firestore: Firebase Console → **Firestore Database** → pestaña **Rules** → pegar el contenido de [`firestore.rules`](firestore.rules) → Publish.
 
+### Quién puede entrar
+
+El acceso está restringido a una lista fija de emails (solo agus y Cele por ahora), en dos capas independientes:
+
+- **Google Cloud Console** (Google Auth Platform → Público): con el proyecto en modo "Prueba" y esos emails cargados como test users, nadie más puede ni siquiera completar el login de Google.
+- **La app misma** (`lib/core/config/equipo_autorizado.dart` + `firestore.rules`): aunque el proyecto de Google esté en producción sin ese filtro, la app rechaza y desloguea a cualquier cuenta que no esté en esa lista, y Firestore también la rechaza a nivel de datos.
+
+Para agregar a alguien al equipo hay que tocar los tres lugares: la lista en Google Cloud Console, la constante `correosEquipoAutorizado` en el código, y la función `esUsuarioDelEquipo()` en `firestore.rules` (y volver a publicar las reglas).
+
 ### Correr la app
 
 `flutter pub get` y después Run desde Android Studio (o `flutter run -d windows`). Va a pedir iniciar sesión con Google antes de mostrar las secciones.
