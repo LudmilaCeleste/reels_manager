@@ -11,31 +11,42 @@ Future<void> mostrarFormularioCliente(
   final formKey = GlobalKey<FormState>();
   final nombreController = TextEditingController();
   final notasController = TextEditingController();
+  final instagramController = TextEditingController();
 
   await showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
       title: const Text('Nuevo cliente'),
-      content: Form(
-        key: formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: nombreController,
-              decoration: const InputDecoration(labelText: 'Nombre'),
-              autofocus: true,
-              validator: (valor) => (valor == null || valor.trim().isEmpty)
-                  ? 'Poné un nombre'
-                  : null,
-            ),
-            TextFormField(
-              controller: notasController,
-              decoration: const InputDecoration(
-                labelText: 'Notas (opcional)',
+      content: SingleChildScrollView(
+        child: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: nombreController,
+                decoration: const InputDecoration(labelText: 'Nombre'),
+                autofocus: true,
+                validator: (valor) => (valor == null || valor.trim().isEmpty)
+                    ? 'Poné un nombre'
+                    : null,
               ),
-            ),
-          ],
+              TextFormField(
+                controller: instagramController,
+                decoration: const InputDecoration(
+                  labelText: 'Instagram (opcional)',
+                  hintText: '@usuario o el link del perfil',
+                  prefixIcon: Icon(Icons.camera_alt_outlined),
+                ),
+              ),
+              TextFormField(
+                controller: notasController,
+                decoration: const InputDecoration(
+                  labelText: 'Notas (opcional)',
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -49,6 +60,7 @@ Future<void> mostrarFormularioCliente(
             await ref.read(agregarClienteProvider)(
               nombre: nombreController.text,
               notas: notasController.text,
+              instagram: instagramController.text,
             );
             if (context.mounted) Navigator.of(context).pop();
           },

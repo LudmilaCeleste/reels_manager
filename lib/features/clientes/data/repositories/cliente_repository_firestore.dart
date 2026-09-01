@@ -27,6 +27,7 @@ class ClienteRepositoryFirestore implements ClienteRepository {
     return _coleccion.doc(cliente.id).set({
       'nombre': cliente.nombre,
       'notas': cliente.notas,
+      'instagram': cliente.instagram,
     });
   }
 
@@ -41,6 +42,7 @@ class ClienteRepositoryFirestore implements ClienteRepository {
       id: doc.id,
       nombre: datos['nombre'] as String? ?? '',
       notas: datos['notas'] as String? ?? '',
+      instagram: datos['instagram'] as String? ?? '',
     );
   }
 }
