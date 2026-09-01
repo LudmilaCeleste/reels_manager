@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../core/widgets/confirmar_eliminacion.dart';
@@ -10,6 +11,12 @@ import '../widgets/formulario_evento.dart';
 /// Calendario compartido por todo el equipo: lo que se carga acá lo ve
 /// cualquiera que inicie sesión en la app (los eventos viven en
 /// Firestore, igual que reels/colaboraciones).
+///
+/// El calendario ocupa toda la pantalla disponible (las filas se
+/// agrandan según el alto real del mes que se está mostrando) y el mes
+/// actual se destaca en un rectángulo de color arriba. La info de cada
+/// día ya no vive siempre visible abajo: aparece en una hoja que sube
+/// desde abajo al tocar el día.
 class CalendarioScreen extends ConsumerStatefulWidget {
   const CalendarioScreen({super.key});
 
@@ -23,6 +30,24 @@ class _CalendarioScreenState extends ConsumerState<CalendarioScreen> {
 
   DateTime _soloFecha(DateTime fecha) =>
       DateTime(fecha.year, fecha.month, fecha.day);
+
+  /// Cuántas filas de semana ocupa el mes de `mes` en la grilla, para
+  /// poder calcular el alto de cada fila y que el calendario llene el
+  /// espacio disponible en vez de quedar chico con aire libre abajo.
+  /// Asume semana empezando el domingo (el valor por defecto de
+  /// `TableCalendar`, que es el que usa esta pantalla).
+  int _semanasEnMes(DateTime mes) {
+    final primerDia = DateTime(mes.year, mes.month, 1);
+    final ultimoDia = DateTime(mes.year, mes.month + 1, 0);
+    final offset = primerDia.weekday % 7;
+    final total = offset + ultimoDia.day;
+    return (total / 7).ceil();
+  }
+
+  String _formatearFechaLarga(DateTime fecha) {
+    final texto = DateFormat("EEEE d 'de' MMMM", 'es').format(fecha);
+    return texto[0].toUpperCase() + texto.substring(1);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,115 +63,111 @@ class _CalendarioScreenState extends ConsumerState<CalendarioScreen> {
             final dia = _soloFecha(evento.fecha);
             eventosPorDia.putIfAbsent(dia, () => []).add(evento);
           }
-          final eventosDelDia =
-              eventosPorDia[_soloFecha(_diaSeleccionado)] ?? [];
 
-          return Column(
-            children: [
-              Card(
-                child: TableCalendar<EventoCalendario>(
-                  locale: 'es',
-                  firstDay: DateTime.utc(2020, 1, 1),
-                  lastDay: DateTime.utc(2035, 12, 31),
-                  focusedDay: _diaEnfocado,
-                  selectedDayPredicate: (dia) =>
-                      _soloFecha(dia) == _soloFecha(_diaSeleccionado),
-                  eventLoader: (dia) => eventosPorDia[_soloFecha(dia)] ?? [],
-                  onDaySelected: (seleccionado, enfocado) {
-                    setState(() {
-                      _diaSeleccionado = seleccionado;
-                      _diaEnfocado = enfocado;
-                    });
-                  },
-                  onPageChanged: (enfocado) => _diaEnfocado = enfocado,
-                  calendarStyle: CalendarStyle(
-                    todayDecoration: BoxDecoration(
-                      color: colorScheme.primary.withValues(alpha: 0.3),
-                      shape: BoxShape.circle,
-                    ),
-                    selectedDecoration: BoxDecoration(
-                      color: colorScheme.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    markerDecoration: BoxDecoration(
-                      color: colorScheme.tertiary,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  headerStyle: const HeaderStyle(
-                    formatButtonVisible: false,
-                    titleCentered: true,
-                  ),
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: eventosDelDia.isEmpty
-                    ? const Center(
-                        child: Text('No hay nada cargado para este día.'),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: eventosDelDia.length,
-                        itemBuilder: (context, index) {
-                          final evento = eventosDelDia[index];
-                          return Card(
-                            child: ListTile(
-                              leading: const Icon(
-                                Icons.event_outlined,
-                                size: 28,
-                              ),
-                              title: Text(evento.titulo),
-                              subtitle: evento.descripcion.isEmpty
-                                  ? null
-                                  : Text(evento.descripcion),
-                              trailing: PopupMenuButton<String>(
-                                tooltip: 'Más opciones',
-                                onSelected: (opcion) async {
-                                  if (opcion == 'editar') {
-                                    await mostrarFormularioEvento(
-                                      context,
-                                      ref,
-                                      fechaInicial: evento.fecha,
-                                      existente: evento,
-                                    );
-                                  } else if (opcion == 'eliminar') {
-                                    final confirmado =
-                                        await confirmarEliminacion(
-                                          context,
-                                          titulo:
-                                              '¿Eliminar "${evento.titulo}"?',
-                                        );
-                                    if (confirmado) {
-                                      await ref.read(eliminarEventoProvider)(
-                                        evento.id,
-                                      );
-                                    }
-                                  }
-                                },
-                                itemBuilder: (context) => const [
-                                  PopupMenuItem(
-                                    value: 'editar',
-                                    child: ListTile(
-                                      leading: Icon(Icons.edit_outlined),
-                                      title: Text('Editar'),
-                                    ),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'eliminar',
-                                    child: ListTile(
-                                      leading: Icon(Icons.delete_outline),
-                                      title: Text('Eliminar'),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                const alturaDiasSemana = 40.0;
+                const alturaEncabezado = 64.0;
+                final semanas = _semanasEnMes(_diaEnfocado);
+                final alturaFila =
+                    ((constraints.maxHeight -
+                                alturaDiasSemana -
+                                alturaEncabezado) /
+                            semanas)
+                        .clamp(56.0, 140.0);
+
+                return SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  child: TableCalendar<EventoCalendario>(
+                    locale: 'es',
+                    firstDay: DateTime.utc(2020, 1, 1),
+                    lastDay: DateTime.utc(2035, 12, 31),
+                    focusedDay: _diaEnfocado,
+                    selectedDayPredicate: (dia) =>
+                        _soloFecha(dia) == _soloFecha(_diaSeleccionado),
+                    eventLoader: (dia) => eventosPorDia[_soloFecha(dia)] ?? [],
+                    rowHeight: alturaFila,
+                    daysOfWeekHeight: alturaDiasSemana,
+                    onDaySelected: (seleccionado, enfocado) {
+                      setState(() {
+                        _diaSeleccionado = seleccionado;
+                        _diaEnfocado = enfocado;
+                      });
+                      _mostrarInfoDelDia(seleccionado);
+                    },
+                    onPageChanged: (enfocado) =>
+                        setState(() => _diaEnfocado = enfocado),
+                    daysOfWeekStyle: const DaysOfWeekStyle(
+                      weekdayStyle: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
                       ),
-              ),
-            ],
+                      weekendStyle: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    calendarStyle: CalendarStyle(
+                      cellMargin: const EdgeInsets.all(6),
+                      defaultTextStyle: const TextStyle(fontSize: 16),
+                      weekendTextStyle: const TextStyle(fontSize: 16),
+                      outsideTextStyle: TextStyle(
+                        fontSize: 16,
+                        color: colorScheme.outline,
+                      ),
+                      todayTextStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      selectedTextStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      todayDecoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.45),
+                        shape: BoxShape.circle,
+                      ),
+                      selectedDecoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      markerDecoration: BoxDecoration(
+                        color: colorScheme.tertiary,
+                        shape: BoxShape.circle,
+                      ),
+                      markerSize: 6,
+                    ),
+                    headerStyle: HeaderStyle(
+                      formatButtonVisible: false,
+                      titleCentered: true,
+                      headerPadding: const EdgeInsets.symmetric(vertical: 10),
+                      headerMargin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      titleTextStyle: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      leftChevronIcon: const Icon(
+                        Icons.chevron_left,
+                        color: Colors.white,
+                      ),
+                      rightChevronIcon: const Icon(
+                        Icons.chevron_right,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -161,6 +182,151 @@ class _CalendarioScreenState extends ConsumerState<CalendarioScreen> {
         tooltip: 'Nuevo evento',
         child: const Icon(Icons.add),
       ),
+    );
+  }
+
+  /// Hoja que sube desde abajo con lo que hay cargado para `dia`. Se
+  /// arma con un `Consumer` propio para que, si se edita o borra un
+  /// evento sin cerrar la hoja, la lista se actualice sola en vez de
+  /// quedar desactualizada.
+  Future<void> _mostrarInfoDelDia(DateTime dia) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.55,
+          minChildSize: 0.3,
+          maxChildSize: 0.92,
+          builder: (context, scrollController) {
+            return Consumer(
+              builder: (context, ref, _) {
+                final eventos = ref.watch(eventosStreamProvider).value ?? [];
+                final eventosDelDia = eventos
+                    .where((e) => _soloFecha(e.fecha) == _soloFecha(dia))
+                    .toList();
+
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _formatearFechaLarga(dia),
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          FilledButton.tonalIcon(
+                            onPressed: () => mostrarFormularioEvento(
+                              context,
+                              ref,
+                              fechaInicial: dia,
+                            ),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Agregar'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: eventosDelDia.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'No hay nada cargado para este día.',
+                                ),
+                              )
+                            : ListView.builder(
+                                controller: scrollController,
+                                itemCount: eventosDelDia.length,
+                                itemBuilder: (context, index) {
+                                  final evento = eventosDelDia[index];
+                                  return Card(
+                                    child: ListTile(
+                                      leading: const Icon(
+                                        Icons.event_outlined,
+                                        size: 28,
+                                      ),
+                                      title: Text(evento.titulo),
+                                      subtitle: evento.descripcion.isEmpty
+                                          ? null
+                                          : Text(evento.descripcion),
+                                      trailing: PopupMenuButton<String>(
+                                        tooltip: 'Más opciones',
+                                        onSelected: (opcion) async {
+                                          if (opcion == 'editar') {
+                                            await mostrarFormularioEvento(
+                                              context,
+                                              ref,
+                                              fechaInicial: evento.fecha,
+                                              existente: evento,
+                                            );
+                                          } else if (opcion == 'eliminar') {
+                                            final confirmado =
+                                                await confirmarEliminacion(
+                                                  context,
+                                                  titulo:
+                                                      '¿Eliminar "${evento.titulo}"?',
+                                                );
+                                            if (confirmado) {
+                                              await ref.read(
+                                                eliminarEventoProvider,
+                                              )(evento.id);
+                                            }
+                                          }
+                                        },
+                                        itemBuilder: (context) => const [
+                                          PopupMenuItem(
+                                            value: 'editar',
+                                            child: ListTile(
+                                              leading: Icon(
+                                                Icons.edit_outlined,
+                                              ),
+                                              title: Text('Editar'),
+                                            ),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'eliminar',
+                                            child: ListTile(
+                                              leading: Icon(
+                                                Icons.delete_outline,
+                                              ),
+                                              title: Text('Eliminar'),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 }
