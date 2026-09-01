@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/utils/formatear_precio.dart';
 import '../../../../core/utils/instagram_links.dart';
 import '../../../../core/widgets/confirmar_eliminacion.dart';
 import '../../domain/entities/colaboracion.dart';
@@ -31,6 +32,7 @@ class ColaboracionesScreen extends ConsumerWidget {
               final colaboracion = colaboraciones[index];
               final tieneInstagram = colaboracion.instagramCliente.isNotEmpty;
               final tieneNotas = colaboracion.notasCliente.isNotEmpty;
+              final tienePrecio = colaboracion.precio != null;
 
               return Card(
                 child: Padding(
@@ -111,6 +113,17 @@ class ColaboracionesScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 14),
                       Text(colaboracion.descripcion),
+                      if (tienePrecio) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          formatearPrecio(colaboracion.precio!),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ],
                       if (tieneNotas) ...[
                         const SizedBox(height: 8),
                         Text(

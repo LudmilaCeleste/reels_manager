@@ -28,6 +28,7 @@ class ColaboracionRepositoryFirestore implements ColaboracionRepository {
       'descripcion': colaboracion.descripcion,
       'estado': colaboracion.estado.name,
       'reelId': colaboracion.reelId,
+      'precio': colaboracion.precio,
     });
   }
 
@@ -51,6 +52,7 @@ class ColaboracionRepositoryFirestore implements ColaboracionRepository {
         orElse: () => EstadoColaboracion.propuesta,
       ),
       reelId: datos['reelId'] as String?,
+      precio: (datos['precio'] as num?)?.toDouble(),
     );
   }
 }

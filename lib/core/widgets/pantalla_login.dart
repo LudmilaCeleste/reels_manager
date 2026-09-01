@@ -45,13 +45,25 @@ class _PantallaLoginState extends ConsumerState<PantallaLogin> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CircleAvatar(
-                    radius: 40,
-                    backgroundColor: colorMarca,
-                    child: Icon(
-                      Icons.movie_creation_outlined,
-                      size: 44,
-                      color: Colors.white,
+                  // Logo de la app: monograma "AC" (Agus + Cele) en el
+                  // color de marca, mismo diseño que el ícono de la
+                  // ventana/taskbar (windows/runner/resources/app_icon.ico).
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: colorMarca,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'AC',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        height: 1,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),

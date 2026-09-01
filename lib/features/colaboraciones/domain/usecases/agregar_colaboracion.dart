@@ -14,6 +14,7 @@ class AgregarColaboracion {
     String instagramCliente = '',
     String notasCliente = '',
     String? reelId,
+    double? precio,
   }) {
     final colaboracion = Colaboracion(
       // TODO(firebase): con Firestore, el id lo genera la propia base.
@@ -24,6 +25,7 @@ class AgregarColaboracion {
       instagramCliente: normalizarUsuarioInstagram(instagramCliente),
       notasCliente: notasCliente.trim(),
       reelId: reelId,
+      precio: precio,
     );
     return _repository.guardarColaboracion(colaboracion);
   }

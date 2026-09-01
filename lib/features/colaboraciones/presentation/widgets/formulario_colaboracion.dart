@@ -7,9 +7,9 @@ import '../providers/colaboracion_providers.dart';
 
 /// Diálogo para cargar una colaboración nueva, o editar una existente si
 /// se pasa `existente`. Acá vive toda la info del cliente (nombre,
-/// Instagram, notas) junto con la descripción y el estado de la
-/// colaboración: no hace falta cargar un cliente por separado en otro
-/// lado, con esto alcanza.
+/// Instagram, notas) junto con la descripción, el precio y el estado de
+/// la colaboración: no hace falta cargar un cliente por separado en
+/// otro lado, con esto alcanza.
 Future<void> mostrarFormularioColaboracion(
   BuildContext context,
   WidgetRef ref, {
@@ -25,6 +25,11 @@ Future<void> mostrarFormularioColaboracion(
   final notasController = TextEditingController(text: existente?.notasCliente);
   final descripcionController = TextEditingController(
     text: existente?.descripcion,
+  );
+  final precioController = TextEditingController(
+    text: existente?.precio == null ? '' : existente!.precio!.toStringAsFixed(
+      existente.precio! % 1 == 0 ? 0 : 2,
+    ),
   );
   final reels = ref.read(reelsStreamProvider).value ?? [];
   final esEdicion = existente != null;
@@ -70,6 +75,26 @@ Future<void> mostrarFormularioColaboracion(
                   validator: (valor) => (valor == null || valor.trim().isEmpty)
                       ? 'Poné una descripción'
                       : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: precioController,
+                  decoration: const InputDecoration(
+                    labelText: 'Precio (opcional)',
+                    prefixIcon: Icon(Icons.attach_money_outlined),
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  validator: (valor) {
+                    if (valor == null || valor.trim().isEmpty) return null;
+                    final normalizado = valor.trim().replaceAll(',', '.');
+                    final numero = double.tryParse(normalizado);
+                    if (numero == null || numero < 0) {
+                      return 'Poné un número válido';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<EstadoColaboracion>(
@@ -127,6 +152,13 @@ Future<void> mostrarFormularioColaboracion(
           FilledButton(
             onPressed: () async {
               if (!(formKey.currentState?.validate() ?? false)) return;
+              final textoPrecio = precioController.text.trim().replaceAll(
+                ',',
+                '.',
+              );
+              final precio = textoPrecio.isEmpty
+                  ? null
+                  : double.tryParse(textoPrecio);
               if (esEdicion) {
                 await ref.read(actualizarColaboracionProvider)(
                   id: existente.id,
@@ -136,6 +168,7 @@ Future<void> mostrarFormularioColaboracion(
                   descripcion: descripcionController.text,
                   estado: estado,
                   reelId: reelId,
+                  precio: precio,
                 );
               } else {
                 await ref.read(agregarColaboracionProvider)(
@@ -145,6 +178,7 @@ Future<void> mostrarFormularioColaboracion(
                   descripcion: descripcionController.text,
                   estado: estado,
                   reelId: reelId,
+                  precio: precio,
                 );
               }
               if (context.mounted) Navigator.of(context).pop();

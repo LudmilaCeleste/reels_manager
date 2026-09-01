@@ -15,6 +15,7 @@ class ActualizarColaboracion {
     String instagramCliente = '',
     String notasCliente = '',
     String? reelId,
+    double? precio,
   }) {
     final colaboracion = Colaboracion(
       id: id,
@@ -24,6 +25,7 @@ class ActualizarColaboracion {
       instagramCliente: normalizarUsuarioInstagram(instagramCliente),
       notasCliente: notasCliente.trim(),
       reelId: reelId,
+      precio: precio,
     );
     return _repository.guardarColaboracion(colaboracion);
   }
