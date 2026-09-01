@@ -14,7 +14,7 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # Manejo de estado y arquitectura
-  flutter_riverpod: ^3.4.2
+  flutter_riverpod: ^3.3.2
   equatable: ^2.1.0
 
   # Reproduccion de reels embebidos (mismo paquete en Windows, Android e iOS)
