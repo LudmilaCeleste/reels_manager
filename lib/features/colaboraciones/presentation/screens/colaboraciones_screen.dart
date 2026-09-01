@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/widgets/confirmar_eliminacion.dart';
 import '../../../clientes/presentation/providers/cliente_providers.dart';
+import '../../domain/entities/colaboracion.dart';
 import '../providers/colaboracion_providers.dart';
 import '../widgets/formulario_colaboracion.dart';
 
