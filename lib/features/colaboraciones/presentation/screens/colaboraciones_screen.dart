@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/utils/instagram_links.dart';
 import '../../../../core/widgets/confirmar_eliminacion.dart';
+import '../../domain/entities/colaboracion.dart';
 import '../providers/colaboracion_providers.dart';
 import '../widgets/formulario_colaboracion.dart';
 
