@@ -13,6 +13,7 @@ class AgregarCuentaInstagram {
   Future<void> call({
     required String usuario,
     String notas = '',
+    String? propuestaId,
     List<CuentaInstagram> cuentasExistentes = const [],
   }) {
     final usuarioNormalizado = normalizarUsuarioInstagram(usuario);
@@ -30,6 +31,7 @@ class AgregarCuentaInstagram {
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       usuario: usuarioNormalizado,
       notas: notas.trim(),
+      propuestaId: propuestaId,
     );
     return _repository.guardarCuenta(cuenta);
   }

@@ -5,6 +5,7 @@ import '../../features/calendario/presentation/screens/calendario_screen.dart';
 import '../../features/colaboraciones/presentation/screens/colaboraciones_screen.dart';
 import '../../features/colaboraciones/presentation/screens/ganancias_screen.dart';
 import '../../features/cuentas_instagram/presentation/screens/cuentas_instagram_screen.dart';
+import '../../features/propuestas/presentation/screens/propuestas_screen.dart';
 import '../../features/reels/presentation/screens/reels_screen.dart';
 
 /// Shell de navegación de toda la app: en pantallas anchas (escritorio)
@@ -39,6 +40,7 @@ class _AppShellState extends State<AppShell> {
       Icons.alternate_email,
       CuentasInstagramScreen(),
     ),
+    _Seccion('Propuestas', Icons.campaign_outlined, PropuestasScreen()),
     _Seccion('Cuenta', Icons.person_pin_outlined, CuentaScreen()),
   ];
 

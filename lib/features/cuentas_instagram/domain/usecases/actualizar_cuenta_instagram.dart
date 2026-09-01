@@ -14,6 +14,7 @@ class ActualizarCuentaInstagram {
     required CuentaInstagram existente,
     required String usuario,
     String notas = '',
+    String? propuestaId,
     List<CuentaInstagram> cuentasExistentes = const [],
   }) {
     final usuarioNormalizado = normalizarUsuarioInstagram(usuario);
@@ -29,9 +30,12 @@ class ActualizarCuentaInstagram {
       throw ArgumentError('Esa cuenta ya está guardada');
     }
 
-    final cuenta = existente.copyWith(
+    final cuenta = CuentaInstagram(
+      id: existente.id,
       usuario: usuarioNormalizado,
       notas: notas.trim(),
+      vista: existente.vista,
+      propuestaId: propuestaId,
     );
     return _repository.guardarCuenta(cuenta);
   }

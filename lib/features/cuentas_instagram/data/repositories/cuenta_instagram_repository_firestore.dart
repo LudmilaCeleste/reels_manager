@@ -24,6 +24,7 @@ class CuentaInstagramRepositoryFirestore implements CuentaInstagramRepository {
       'usuario': cuenta.usuario,
       'notas': cuenta.notas,
       'vista': cuenta.vista,
+      'propuestaId': cuenta.propuestaId,
     });
   }
 
@@ -54,6 +55,7 @@ class CuentaInstagramRepositoryFirestore implements CuentaInstagramRepository {
       usuario: datos['usuario'] as String? ?? '',
       notas: datos['notas'] as String? ?? '',
       vista: datos['vista'] as bool? ?? false,
+      propuestaId: datos['propuestaId'] as String?,
     );
   }
 }

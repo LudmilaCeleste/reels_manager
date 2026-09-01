@@ -14,17 +14,23 @@ Future<void> mostrarFormularioColaboracion(
   BuildContext context,
   WidgetRef ref, {
   Colaboracion? existente,
+  // Valores para arrancar precargada una colaboración nueva (por ejemplo,
+  // al convertir una cuenta de Instagram ya vista en una colaboración).
+  // Se ignoran si se pasa `existente`.
+  String? nombreClienteInicial,
+  String? instagramClienteInicial,
+  String? descripcionInicial,
 }) async {
   final formKey = GlobalKey<FormState>();
   final nombreController = TextEditingController(
-    text: existente?.nombreCliente,
+    text: existente?.nombreCliente ?? nombreClienteInicial,
   );
   final instagramController = TextEditingController(
-    text: existente?.instagramCliente,
+    text: existente?.instagramCliente ?? instagramClienteInicial,
   );
   final notasController = TextEditingController(text: existente?.notasCliente);
   final descripcionController = TextEditingController(
-    text: existente?.descripcion,
+    text: existente?.descripcion ?? descripcionInicial,
   );
   final precioController = TextEditingController(
     text: existente?.precio == null ? '' : existente!.precio!.toStringAsFixed(
