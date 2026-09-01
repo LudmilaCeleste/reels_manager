@@ -4,6 +4,7 @@ import '../../features/auth/presentation/screens/cuenta_screen.dart';
 import '../../features/calendario/presentation/screens/calendario_screen.dart';
 import '../../features/colaboraciones/presentation/screens/colaboraciones_screen.dart';
 import '../../features/colaboraciones/presentation/screens/ganancias_screen.dart';
+import '../../features/cuentas_instagram/presentation/screens/cuentas_instagram_screen.dart';
 import '../../features/reels/presentation/screens/reels_screen.dart';
 
 /// Shell de navegación de toda la app: en pantallas anchas (escritorio)
@@ -32,6 +33,11 @@ class _AppShellState extends State<AppShell> {
       'Calendario',
       Icons.calendar_month_outlined,
       CalendarioScreen(),
+    ),
+    _Seccion(
+      'Cuentas IG',
+      Icons.alternate_email,
+      CuentasInstagramScreen(),
     ),
     _Seccion('Cuenta', Icons.person_pin_outlined, CuentaScreen()),
   ];
