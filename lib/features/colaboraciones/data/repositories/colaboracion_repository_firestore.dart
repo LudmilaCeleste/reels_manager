@@ -29,6 +29,9 @@ class ColaboracionRepositoryFirestore implements ColaboracionRepository {
       'estado': colaboracion.estado.name,
       'reelId': colaboracion.reelId,
       'precio': colaboracion.precio,
+      'fecha': colaboracion.fecha == null
+          ? null
+          : Timestamp.fromDate(colaboracion.fecha!),
     });
   }
 
@@ -53,6 +56,7 @@ class ColaboracionRepositoryFirestore implements ColaboracionRepository {
       ),
       reelId: datos['reelId'] as String?,
       precio: (datos['precio'] as num?)?.toDouble(),
+      fecha: (datos['fecha'] as Timestamp?)?.toDate(),
     );
   }
 }

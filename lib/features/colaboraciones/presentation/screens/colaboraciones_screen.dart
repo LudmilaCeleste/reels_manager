@@ -33,6 +33,7 @@ class ColaboracionesScreen extends ConsumerWidget {
               final tieneInstagram = colaboracion.instagramCliente.isNotEmpty;
               final tieneNotas = colaboracion.notasCliente.isNotEmpty;
               final tienePrecio = colaboracion.precio != null;
+              final tieneFecha = colaboracion.fecha != null;
 
               return Card(
                 child: Padding(
@@ -113,6 +114,25 @@ class ColaboracionesScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 14),
                       Text(colaboracion.descripcion),
+                      if (tieneFecha) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_month_outlined,
+                              size: 16,
+                              color: Theme.of(context).colorScheme.secondary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${colaboracion.fecha!.day.toString().padLeft(2, '0')}/'
+                              '${colaboracion.fecha!.month.toString().padLeft(2, '0')}/'
+                              '${colaboracion.fecha!.year}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ],
                       if (tienePrecio) ...[
                         const SizedBox(height: 8),
                         Text(

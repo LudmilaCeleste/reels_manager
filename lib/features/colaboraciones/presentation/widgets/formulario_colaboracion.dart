@@ -7,9 +7,9 @@ import '../providers/colaboracion_providers.dart';
 
 /// Diálogo para cargar una colaboración nueva, o editar una existente si
 /// se pasa `existente`. Acá vive toda la info del cliente (nombre,
-/// Instagram, notas) junto con la descripción, el precio y el estado de
-/// la colaboración: no hace falta cargar un cliente por separado en
-/// otro lado, con esto alcanza.
+/// Instagram, notas) junto con la descripción, el precio, la fecha y el
+/// estado de la colaboración: no hace falta cargar un cliente por
+/// separado en otro lado, con esto alcanza.
 Future<void> mostrarFormularioColaboracion(
   BuildContext context,
   WidgetRef ref, {
@@ -36,6 +36,7 @@ Future<void> mostrarFormularioColaboracion(
 
   String? reelId = existente?.reelId;
   var estado = existente?.estado ?? EstadoColaboracion.propuesta;
+  DateTime? fecha = existente?.fecha;
 
   await showDialog<void>(
     context: context,
@@ -97,6 +98,43 @@ Future<void> mostrarFormularioColaboracion(
                   },
                 ),
                 const SizedBox(height: 16),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.calendar_month_outlined),
+                  title: Text(
+                    fecha == null
+                        ? 'Sin fecha (opcional)'
+                        : '${fecha!.day.toString().padLeft(2, '0')}/'
+                              '${fecha!.month.toString().padLeft(2, '0')}/'
+                              '${fecha!.year}',
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextButton(
+                        onPressed: () async {
+                          final elegida = await showDatePicker(
+                            context: context,
+                            initialDate: fecha ?? DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2100),
+                          );
+                          if (elegida != null) {
+                            setState(() => fecha = elegida);
+                          }
+                        },
+                        child: Text(fecha == null ? 'Elegir' : 'Cambiar'),
+                      ),
+                      if (fecha != null)
+                        IconButton(
+                          tooltip: 'Quitar fecha',
+                          icon: const Icon(Icons.close),
+                          onPressed: () => setState(() => fecha = null),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
                 DropdownButtonFormField<EstadoColaboracion>(
                   value: estado,
                   decoration: const InputDecoration(labelText: 'Estado'),
@@ -169,6 +207,7 @@ Future<void> mostrarFormularioColaboracion(
                   estado: estado,
                   reelId: reelId,
                   precio: precio,
+                  fecha: fecha,
                 );
               } else {
                 await ref.read(agregarColaboracionProvider)(
@@ -179,6 +218,7 @@ Future<void> mostrarFormularioColaboracion(
                   estado: estado,
                   reelId: reelId,
                   precio: precio,
+                  fecha: fecha,
                 );
               }
               if (context.mounted) Navigator.of(context).pop();

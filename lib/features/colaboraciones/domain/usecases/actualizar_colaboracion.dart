@@ -16,6 +16,7 @@ class ActualizarColaboracion {
     String notasCliente = '',
     String? reelId,
     double? precio,
+    DateTime? fecha,
   }) {
     final colaboracion = Colaboracion(
       id: id,
@@ -26,6 +27,7 @@ class ActualizarColaboracion {
       notasCliente: notasCliente.trim(),
       reelId: reelId,
       precio: precio,
+      fecha: fecha == null ? null : DateTime(fecha.year, fecha.month, fecha.day),
     );
     return _repository.guardarColaboracion(colaboracion);
   }

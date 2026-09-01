@@ -25,6 +25,7 @@ class Colaboracion extends Equatable {
     this.notasCliente = '',
     this.reelId,
     this.precio,
+    this.fecha,
   });
 
   final String id;
@@ -39,6 +40,11 @@ class Colaboracion extends Equatable {
   /// una propuesta recién armada puede no tener un número todavía.
   final double? precio;
 
+  /// Fecha en la que se hace la colaboración (grabación, publicación,
+  /// reunión, lo que corresponda). Opcional por el mismo motivo que el
+  /// precio: una propuesta puede no tener fecha todavía.
+  final DateTime? fecha;
+
   @override
   List<Object?> get props => [
     id,
@@ -49,5 +55,6 @@ class Colaboracion extends Equatable {
     notasCliente,
     reelId,
     precio,
+    fecha,
   ];
 }
