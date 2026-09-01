@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../clientes/presentation/providers/cliente_providers.dart';
+import '../../../colaboraciones/presentation/providers/colaboracion_providers.dart';
 import '../../domain/entities/reel.dart';
 import '../providers/reel_providers.dart';
 
 /// Diálogo para guardar un reel nuevo, o editar uno existente si se pasa
 /// `existente`: link, descripción, categoría y, opcionalmente, a qué
-/// cliente pertenece.
+/// colaboración (cliente) pertenece.
 Future<void> mostrarFormularioReel(
   BuildContext context,
   WidgetRef ref, {
@@ -19,10 +19,10 @@ Future<void> mostrarFormularioReel(
     text: existente?.descripcion,
   );
   var categoria = existente?.categoria ?? CategoriaReel.ejemplo;
-  String? clienteId = existente?.clienteId;
+  String? colaboracionId = existente?.colaboracionId;
   final esEdicion = existente != null;
 
-  final clientes = ref.read(clientesStreamProvider).value ?? [];
+  final colaboraciones = ref.read(colaboracionesStreamProvider).value ?? [];
 
   await showDialog<void>(
     context: context,
@@ -46,11 +46,13 @@ Future<void> mostrarFormularioReel(
                       ? 'Pegá el link'
                       : null,
                 ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: descripcionController,
                   decoration: const InputDecoration(labelText: 'Descripción'),
                   maxLines: 2,
                 ),
+                const SizedBox(height: 16),
                 DropdownButtonFormField<CategoriaReel>(
                   value: categoria,
                   decoration: const InputDecoration(labelText: 'Categoría'),
@@ -61,21 +63,28 @@ Future<void> mostrarFormularioReel(
                   onChanged: (valor) =>
                       setState(() => categoria = valor ?? categoria),
                 ),
-                DropdownButtonFormField<String?>(
-                  value: clienteId,
-                  decoration: const InputDecoration(
-                    labelText: 'Cliente (opcional)',
-                  ),
-                  items: [
-                    const DropdownMenuItem(value: null, child: Text('Ninguno')),
-                    for (final cliente in clientes)
-                      DropdownMenuItem(
-                        value: cliente.id,
-                        child: Text(cliente.nombre),
+                if (colaboraciones.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String?>(
+                    value: colaboracionId,
+                    decoration: const InputDecoration(
+                      labelText: 'Cliente (opcional)',
+                    ),
+                    items: [
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text('Ninguno'),
                       ),
-                  ],
-                  onChanged: (valor) => setState(() => clienteId = valor),
-                ),
+                      for (final colaboracion in colaboraciones)
+                        DropdownMenuItem(
+                          value: colaboracion.id,
+                          child: Text(colaboracion.nombreCliente),
+                        ),
+                    ],
+                    onChanged: (valor) =>
+                        setState(() => colaboracionId = valor),
+                  ),
+                ],
               ],
             ),
           ),
@@ -95,14 +104,14 @@ Future<void> mostrarFormularioReel(
                     urlInstagram: urlController.text,
                     descripcion: descripcionController.text,
                     categoria: categoria,
-                    clienteId: clienteId,
+                    colaboracionId: colaboracionId,
                   );
                 } else {
                   await ref.read(guardarReelProvider)(
                     urlInstagram: urlController.text,
                     descripcion: descripcionController.text,
                     categoria: categoria,
-                    clienteId: clienteId,
+                    colaboracionId: colaboracionId,
                   );
                 }
                 if (context.mounted) Navigator.of(context).pop();

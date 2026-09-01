@@ -11,14 +11,14 @@ class ActualizarEvento {
     required String titulo,
     required DateTime fecha,
     String descripcion = '',
-    String? clienteId,
+    String? colaboracionId,
   }) {
     final evento = EventoCalendario(
       id: id,
       titulo: titulo.trim(),
       fecha: DateTime(fecha.year, fecha.month, fecha.day),
       descripcion: descripcion.trim(),
-      clienteId: clienteId,
+      colaboracionId: colaboracionId,
     );
     return _repository.guardarEvento(evento);
   }

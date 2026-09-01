@@ -1,30 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../clientes/presentation/providers/cliente_providers.dart';
 import '../../../reels/presentation/providers/reel_providers.dart';
 import '../../domain/entities/colaboracion.dart';
 import '../providers/colaboracion_providers.dart';
 
 /// Diálogo para cargar una colaboración nueva, o editar una existente si
-/// se pasa `existente`. Requiere elegir un cliente (tiene que haber al
-/// menos uno cargado); el reel asociado es opcional.
+/// se pasa `existente`. Acá vive toda la info del cliente (nombre,
+/// Instagram, notas) junto con la descripción y el estado de la
+/// colaboración: no hace falta cargar un cliente por separado en otro
+/// lado, con esto alcanza.
 Future<void> mostrarFormularioColaboracion(
   BuildContext context,
   WidgetRef ref, {
   Colaboracion? existente,
 }) async {
   final formKey = GlobalKey<FormState>();
+  final nombreController = TextEditingController(
+    text: existente?.nombreCliente,
+  );
+  final instagramController = TextEditingController(
+    text: existente?.instagramCliente,
+  );
+  final notasController = TextEditingController(text: existente?.notasCliente);
   final descripcionController = TextEditingController(
     text: existente?.descripcion,
   );
-  final clientes = ref.read(clientesStreamProvider).value ?? [];
   final reels = ref.read(reelsStreamProvider).value ?? [];
   final esEdicion = existente != null;
 
-  if (clientes.isEmpty) return;
-
-  var clienteId = existente?.clienteId ?? clientes.first.id;
   String? reelId = existente?.reelId;
   var estado = existente?.estado ?? EstadoColaboracion.propuesta;
 
@@ -39,19 +43,26 @@ Future<void> mostrarFormularioColaboracion(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                DropdownButtonFormField<String>(
-                  value: clienteId,
-                  decoration: const InputDecoration(labelText: 'Cliente'),
-                  items: [
-                    for (final cliente in clientes)
-                      DropdownMenuItem(
-                        value: cliente.id,
-                        child: Text(cliente.nombre),
-                      ),
-                  ],
-                  onChanged: (valor) =>
-                      setState(() => clienteId = valor ?? clienteId),
+                TextFormField(
+                  controller: nombreController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre del cliente',
+                  ),
+                  autofocus: true,
+                  validator: (valor) => (valor == null || valor.trim().isEmpty)
+                      ? 'Poné un nombre'
+                      : null,
                 ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: instagramController,
+                  decoration: const InputDecoration(
+                    labelText: 'Instagram (opcional)',
+                    hintText: '@usuario o el link del perfil',
+                    prefixIcon: Icon(Icons.camera_alt_outlined),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: descripcionController,
                   decoration: const InputDecoration(labelText: 'Descripción'),
@@ -60,6 +71,7 @@ Future<void> mostrarFormularioColaboracion(
                       ? 'Poné una descripción'
                       : null,
                 ),
+                const SizedBox(height: 16),
                 DropdownButtonFormField<EstadoColaboracion>(
                   value: estado,
                   decoration: const InputDecoration(labelText: 'Estado'),
@@ -70,7 +82,15 @@ Future<void> mostrarFormularioColaboracion(
                   onChanged: (valor) =>
                       setState(() => estado = valor ?? estado),
                 ),
-                if (reels.isNotEmpty)
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: notasController,
+                  decoration: const InputDecoration(
+                    labelText: 'Notas (opcional)',
+                  ),
+                ),
+                if (reels.isNotEmpty) ...[
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String?>(
                     value: reelId,
                     decoration: const InputDecoration(
@@ -94,6 +114,7 @@ Future<void> mostrarFormularioColaboracion(
                     ],
                     onChanged: (valor) => setState(() => reelId = valor),
                   ),
+                ],
               ],
             ),
           ),
@@ -109,14 +130,18 @@ Future<void> mostrarFormularioColaboracion(
               if (esEdicion) {
                 await ref.read(actualizarColaboracionProvider)(
                   id: existente.id,
-                  clienteId: clienteId,
+                  nombreCliente: nombreController.text,
+                  instagramCliente: instagramController.text,
+                  notasCliente: notasController.text,
                   descripcion: descripcionController.text,
                   estado: estado,
                   reelId: reelId,
                 );
               } else {
                 await ref.read(agregarColaboracionProvider)(
-                  clienteId: clienteId,
+                  nombreCliente: nombreController.text,
+                  instagramCliente: instagramController.text,
+                  notasCliente: notasController.text,
                   descripcion: descripcionController.text,
                   estado: estado,
                   reelId: reelId,

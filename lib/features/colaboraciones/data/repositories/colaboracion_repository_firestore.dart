@@ -13,15 +13,18 @@ class ColaboracionRepositoryFirestore implements ColaboracionRepository {
 
   @override
   Stream<List<Colaboracion>> observarColaboraciones() {
-    return _coleccion.snapshots().map(
-      (snapshot) => snapshot.docs.map(_aColaboracion).toList(),
-    );
+    return _coleccion
+        .orderBy('nombreCliente')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map(_aColaboracion).toList());
   }
 
   @override
   Future<void> guardarColaboracion(Colaboracion colaboracion) {
     return _coleccion.doc(colaboracion.id).set({
-      'clienteId': colaboracion.clienteId,
+      'nombreCliente': colaboracion.nombreCliente,
+      'instagramCliente': colaboracion.instagramCliente,
+      'notasCliente': colaboracion.notasCliente,
       'descripcion': colaboracion.descripcion,
       'estado': colaboracion.estado.name,
       'reelId': colaboracion.reelId,
@@ -39,7 +42,9 @@ class ColaboracionRepositoryFirestore implements ColaboracionRepository {
     final datos = doc.data();
     return Colaboracion(
       id: doc.id,
-      clienteId: datos['clienteId'] as String? ?? '',
+      nombreCliente: datos['nombreCliente'] as String? ?? '',
+      instagramCliente: datos['instagramCliente'] as String? ?? '',
+      notasCliente: datos['notasCliente'] as String? ?? '',
       descripcion: datos['descripcion'] as String? ?? '',
       estado: EstadoColaboracion.values.firstWhere(
         (e) => e.name == datos['estado'],

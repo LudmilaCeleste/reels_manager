@@ -24,7 +24,7 @@ class ReelRepositoryFirestore implements ReelRepository {
       'urlInstagram': reel.urlInstagram,
       'descripcion': reel.descripcion,
       'categoria': reel.categoria.name,
-      'clienteId': reel.clienteId,
+      'colaboracionId': reel.colaboracionId,
     });
   }
 
@@ -43,7 +43,7 @@ class ReelRepositoryFirestore implements ReelRepository {
         (c) => c.name == datos['categoria'],
         orElse: () => CategoriaReel.ejemplo,
       ),
-      clienteId: datos['clienteId'] as String?,
+      colaboracionId: datos['colaboracionId'] as String?,
     );
   }
 }

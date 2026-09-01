@@ -7,7 +7,7 @@ import 'pantalla_login.dart';
 
 /// Punto de entrada real de la app: mientras no haya sesión iniciada,
 /// muestra la pantalla de login; una vez logueado, muestra el shell con
-/// las secciones (Clientes, Reels, Colaboraciones, Cuenta).
+/// las secciones (Reels, Colaboraciones, Calendario, Cuenta).
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 

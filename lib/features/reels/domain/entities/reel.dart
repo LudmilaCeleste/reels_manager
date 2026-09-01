@@ -18,14 +18,16 @@ class Reel extends Equatable {
     required this.urlInstagram,
     required this.descripcion,
     required this.categoria,
-    this.clienteId,
+    this.colaboracionId,
   });
 
   final String id;
   final String urlInstagram;
   final String descripcion;
   final CategoriaReel categoria;
-  final String? clienteId;
+
+  /// A qué colaboración (cliente) pertenece este reel, si aplica.
+  final String? colaboracionId;
 
   @override
   List<Object?> get props => [
@@ -33,6 +35,6 @@ class Reel extends Equatable {
     urlInstagram,
     descripcion,
     categoria,
-    clienteId,
+    colaboracionId,
   ];
 }

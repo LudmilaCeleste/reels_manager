@@ -14,7 +14,7 @@ class GuardarReel {
     required String urlInstagram,
     required String descripcion,
     required CategoriaReel categoria,
-    String? clienteId,
+    String? colaboracionId,
   }) {
     final url = urlInstagram.trim();
     if (!esLinkDeInstagramValido(url)) {
@@ -27,7 +27,7 @@ class GuardarReel {
       urlInstagram: url,
       descripcion: descripcion.trim(),
       categoria: categoria,
-      clienteId: clienteId,
+      colaboracionId: colaboracionId,
     );
     return _repository.guardarReel(reel);
   }

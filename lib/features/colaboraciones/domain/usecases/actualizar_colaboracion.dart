@@ -1,3 +1,4 @@
+import '../../../../core/utils/normalizar_instagram.dart';
 import '../entities/colaboracion.dart';
 import '../repositories/colaboracion_repository.dart';
 
@@ -8,16 +9,20 @@ class ActualizarColaboracion {
 
   Future<void> call({
     required String id,
-    required String clienteId,
+    required String nombreCliente,
     required String descripcion,
     required EstadoColaboracion estado,
+    String instagramCliente = '',
+    String notasCliente = '',
     String? reelId,
   }) {
     final colaboracion = Colaboracion(
       id: id,
-      clienteId: clienteId,
+      nombreCliente: nombreCliente.trim(),
       descripcion: descripcion.trim(),
       estado: estado,
+      instagramCliente: normalizarUsuarioInstagram(instagramCliente),
+      notasCliente: notasCliente.trim(),
       reelId: reelId,
     );
     return _repository.guardarColaboracion(colaboracion);

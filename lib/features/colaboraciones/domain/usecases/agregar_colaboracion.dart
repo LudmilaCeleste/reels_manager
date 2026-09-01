@@ -1,3 +1,4 @@
+import '../../../../core/utils/normalizar_instagram.dart';
 import '../entities/colaboracion.dart';
 import '../repositories/colaboracion_repository.dart';
 
@@ -7,17 +8,21 @@ class AgregarColaboracion {
   final ColaboracionRepository _repository;
 
   Future<void> call({
-    required String clienteId,
+    required String nombreCliente,
     required String descripcion,
     required EstadoColaboracion estado,
+    String instagramCliente = '',
+    String notasCliente = '',
     String? reelId,
   }) {
     final colaboracion = Colaboracion(
       // TODO(firebase): con Firestore, el id lo genera la propia base.
       id: DateTime.now().microsecondsSinceEpoch.toString(),
-      clienteId: clienteId,
+      nombreCliente: nombreCliente.trim(),
       descripcion: descripcion.trim(),
       estado: estado,
+      instagramCliente: normalizarUsuarioInstagram(instagramCliente),
+      notasCliente: notasCliente.trim(),
       reelId: reelId,
     );
     return _repository.guardarColaboracion(colaboracion);

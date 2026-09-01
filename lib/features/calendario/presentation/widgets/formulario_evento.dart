@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../clientes/presentation/providers/cliente_providers.dart';
+import '../../../colaboraciones/presentation/providers/colaboracion_providers.dart';
 import '../../domain/entities/evento_calendario.dart';
 import '../providers/calendario_providers.dart';
 
@@ -22,10 +22,10 @@ Future<void> mostrarFormularioEvento(
     text: existente?.descripcion,
   );
   var fecha = fechaInicial;
-  String? clienteId = existente?.clienteId;
+  String? colaboracionId = existente?.colaboracionId;
   final esEdicion = existente != null;
 
-  final clientes = ref.read(clientesStreamProvider).value ?? [];
+  final colaboraciones = ref.read(colaboracionesStreamProvider).value ?? [];
 
   await showDialog<void>(
     context: context,
@@ -46,6 +46,7 @@ Future<void> mostrarFormularioEvento(
                       ? 'Poné un título'
                       : null,
                 ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: descripcionController,
                   decoration: const InputDecoration(
@@ -53,7 +54,7 @@ Future<void> mostrarFormularioEvento(
                   ),
                   maxLines: 2,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.calendar_today_outlined),
@@ -73,9 +74,10 @@ Future<void> mostrarFormularioEvento(
                     if (elegida != null) setState(() => fecha = elegida);
                   },
                 ),
-                if (clientes.isNotEmpty)
+                if (colaboraciones.isNotEmpty) ...[
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String?>(
-                    value: clienteId,
+                    value: colaboracionId,
                     decoration: const InputDecoration(
                       labelText: 'Cliente (opcional)',
                     ),
@@ -84,14 +86,16 @@ Future<void> mostrarFormularioEvento(
                         value: null,
                         child: Text('Ninguno'),
                       ),
-                      for (final cliente in clientes)
+                      for (final colaboracion in colaboraciones)
                         DropdownMenuItem(
-                          value: cliente.id,
-                          child: Text(cliente.nombre),
+                          value: colaboracion.id,
+                          child: Text(colaboracion.nombreCliente),
                         ),
                     ],
-                    onChanged: (valor) => setState(() => clienteId = valor),
+                    onChanged: (valor) =>
+                        setState(() => colaboracionId = valor),
                   ),
+                ],
               ],
             ),
           ),
@@ -110,14 +114,14 @@ Future<void> mostrarFormularioEvento(
                   titulo: tituloController.text,
                   fecha: fecha,
                   descripcion: descripcionController.text,
-                  clienteId: clienteId,
+                  colaboracionId: colaboracionId,
                 );
               } else {
                 await ref.read(agregarEventoProvider)(
                   titulo: tituloController.text,
                   fecha: fecha,
                   descripcion: descripcionController.text,
-                  clienteId: clienteId,
+                  colaboracionId: colaboracionId,
                 );
               }
               if (context.mounted) Navigator.of(context).pop();

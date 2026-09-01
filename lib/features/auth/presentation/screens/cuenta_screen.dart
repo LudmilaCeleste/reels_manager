@@ -19,21 +19,22 @@ class CuentaScreen extends ConsumerWidget {
               return const Text('No hay sesión iniciada.');
             }
             return Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.account_circle_outlined, size: 48),
-                  const SizedBox(height: 12),
+                  const Icon(Icons.account_circle_outlined, size: 56),
+                  const SizedBox(height: 16),
                   Text(
                     usuario.nombre.isEmpty ? usuario.email : usuario.nombre,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
+                  const SizedBox(height: 4),
                   Text(
                     usuario.email,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 28),
                   OutlinedButton.icon(
                     onPressed: () =>
                         ref.read(authRepositoryProvider).cerrarSesion(),

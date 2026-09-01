@@ -25,7 +25,7 @@ class CalendarioRepositoryFirestore implements CalendarioRepository {
       'titulo': evento.titulo,
       'descripcion': evento.descripcion,
       'fecha': Timestamp.fromDate(evento.fecha),
-      'clienteId': evento.clienteId,
+      'colaboracionId': evento.colaboracionId,
     });
   }
 
@@ -42,7 +42,7 @@ class CalendarioRepositoryFirestore implements CalendarioRepository {
       titulo: datos['titulo'] as String? ?? '',
       fecha: timestamp?.toDate() ?? DateTime.now(),
       descripcion: datos['descripcion'] as String? ?? '',
-      clienteId: datos['clienteId'] as String?,
+      colaboracionId: datos['colaboracionId'] as String?,
     );
   }
 }

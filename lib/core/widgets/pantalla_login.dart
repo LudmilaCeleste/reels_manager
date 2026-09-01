@@ -34,38 +34,38 @@ class _PantallaLoginState extends ConsumerState<PantallaLogin> {
     return Scaffold(
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 380),
+          constraints: const BoxConstraints(maxWidth: 400),
           child: Card(
-            margin: const EdgeInsets.all(24),
+            margin: const EdgeInsets.all(28),
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: 32,
-                vertical: 40,
+                horizontal: 36,
+                vertical: 48,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const CircleAvatar(
-                    radius: 36,
+                    radius: 40,
                     backgroundColor: colorMarca,
                     child: Icon(
                       Icons.movie_creation_outlined,
-                      size: 40,
+                      size: 44,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   Text(
                     'Gestor de Reels',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     'Iniciá sesión con tu cuenta de Google del equipo',
                     style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 32),
                   if (_iniciandoSesion)
                     const CircularProgressIndicator()
                   else
@@ -78,7 +78,7 @@ class _PantallaLoginState extends ConsumerState<PantallaLogin> {
                       ),
                     ),
                   if (_error != null) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     Text(
                       _error!,
                       style: TextStyle(

@@ -9,7 +9,7 @@ import '../widgets/formulario_evento.dart';
 
 /// Calendario compartido por todo el equipo: lo que se carga acá lo ve
 /// cualquiera que inicie sesión en la app (los eventos viven en
-/// Firestore, igual que clientes/reels/colaboraciones).
+/// Firestore, igual que reels/colaboraciones).
 class CalendarioScreen extends ConsumerStatefulWidget {
   const CalendarioScreen({super.key});
 

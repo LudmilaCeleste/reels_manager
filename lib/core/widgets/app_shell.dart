@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../features/auth/presentation/screens/cuenta_screen.dart';
 import '../../features/calendario/presentation/screens/calendario_screen.dart';
-import '../../features/clientes/presentation/screens/clientes_screen.dart';
 import '../../features/colaboraciones/presentation/screens/colaboraciones_screen.dart';
 import '../../features/reels/presentation/screens/reels_screen.dart';
 
@@ -21,7 +20,6 @@ class _AppShellState extends State<AppShell> {
   int _indice = 0;
 
   static const _secciones = [
-    _Seccion('Clientes', Icons.people_outline, ClientesScreen()),
     _Seccion('Reels', Icons.play_circle_outline, ReelsScreen()),
     _Seccion(
       'Colaboraciones',

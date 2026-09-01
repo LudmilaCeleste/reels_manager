@@ -1,12 +1,14 @@
 # reels_manager
 
-App para guardar y organizar reels de Instagram (clientes, ejemplos, colaboraciones, calendario del equipo), con reproducción del video directo desde el link.
+App para guardar y organizar reels de Instagram (ejemplos, colaboraciones con datos del cliente, calendario del equipo), con reproducción del video directo desde el link.
 
 Ver [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) para la arquitectura, el stack elegido y el plan por etapas.
 
-## Estado actual: v0.3 — conectada a Firebase, con calendario compartido
+## Estado actual: v0.5 — CRUD completo y Colaboraciones con los datos del cliente
 
-Clientes, Reels, Colaboraciones y ahora Calendario leen y escriben en Cloud Firestore, en tiempo real y compartido por todo el equipo (lo que carga una persona lo ve el resto al instante, no hace falta avisar por otro lado). El login es con Google.
+Reels, Colaboraciones y Calendario leen y escriben en Cloud Firestore, en tiempo real y compartido por todo el equipo (lo que carga una persona lo ve el resto al instante, no hace falta avisar por otro lado). El login es con Google.
+
+Ya no existe una sección "Clientes" separada: el nombre, Instagram y notas del cliente viven directamente en cada Colaboración (cada colaboración ES el registro del cliente). Reels y Calendario referencian a un cliente eligiendo la colaboración correspondiente. Todas las secciones tienen alta, edición y borrado (con confirmación).
 
 Identidad visual: color de marca verde agua (`colorMarca` en `lib/core/theme/app_theme.dart`), con el resto de la paleta generada a partir de ese color siguiendo Material 3 — para cambiarlo alcanza con tocar esa única constante.
 
