@@ -35,6 +35,10 @@ dependencies:
   table_calendar: ^3.2.1
   intl: ^0.20.3
 
+  # Aviso de version nueva disponible (compara contra los Releases de
+  # GitHub, ver lib/core/utils/verificar_actualizacion.dart)
+  package_info_plus: ^9.0.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

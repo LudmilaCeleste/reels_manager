@@ -1,0 +1,54 @@
+name: Release Windows build
+
+# Se dispara con el mismo gesto que ya usamos a mano para hacer un
+# release: subir la versión en pubspec.yaml y crear un tag "vX.Y.Z".
+# Al pushear ese tag, esto compila el .exe de Windows y lo publica como
+# GitHub Release, para que la app (ver
+# lib/core/utils/verificar_actualizacion.dart) le pueda avisar a la
+# gente que hay una versión nueva sin que alguien tenga que compilarla
+# y mandarla a mano.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      # Mismo problema que en las PCs del equipo: un plugin genera rutas
+      # de build tan largas que superan el límite de 260 caracteres de
+      # Windows. Acá es una VM descartable de GitHub, así que no hay
+      # ningún problema en tocar esta configuración.
+      - name: Habilitar rutas largas de Windows
+        shell: powershell
+        run: |
+          New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWord -Force
+          git config --system core.longpaths true
+
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.4"
+          channel: stable
+
+      - run: flutter pub get
+
+      - run: flutter build windows --release
+
+      - name: Empaquetar el build
+        shell: powershell
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath reels_manager-windows.zip
+
+      - name: Publicar release en GitHub
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" reels_manager-windows.zip \
+            --title "reels_manager ${{ github.ref_name }}" \
+            --generate-notes
