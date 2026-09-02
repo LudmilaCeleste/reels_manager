@@ -37,6 +37,19 @@ ThemeData _construirTema(Brightness brillo) {
         fontWeight: FontWeight.w600,
       ).copyWith(color: colorScheme.onPrimary),
     ),
+    // Sin esto, un TabBar dentro del AppBar (fondo de color, no de
+    // superficie) usa los colores por defecto de Material pensados para
+    // fondo blanco y queda invisible sobre el verde de marca.
+    tabBarTheme: TabBarThemeData(
+      labelColor: colorScheme.onPrimary,
+      unselectedLabelColor: colorScheme.onPrimary.withValues(alpha: 0.7),
+      indicatorColor: colorScheme.onPrimary,
+      labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+      unselectedLabelStyle: const TextStyle(
+        fontWeight: FontWeight.w500,
+        fontSize: 15,
+      ),
+    ),
     navigationRailTheme: NavigationRailThemeData(
       backgroundColor: colorScheme.surfaceContainerLow,
       minWidth: 96,

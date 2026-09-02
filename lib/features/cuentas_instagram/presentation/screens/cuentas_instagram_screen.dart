@@ -12,9 +12,12 @@ import '../../domain/entities/cuenta_instagram.dart';
 import '../providers/cuenta_instagram_providers.dart';
 import '../widgets/formulario_cuenta_instagram.dart';
 
-/// Lista de cuentas de Instagram guardadas como referencia. Entrar a
-/// escribirle a una cuenta la marca como "vista" automáticamente; las
-/// que todavía no se revisaron se destacan para que salten a la vista.
+/// Lista de cuentas de Instagram guardadas como referencia, separadas en
+/// dos pestañas (No vistas / Vistas). Entrar a escribirle a una cuenta
+/// la marca como "vista" automáticamente. El buscador es independiente
+/// de las pestañas: mientras hay algo escrito, muestra resultados de
+/// las dos categorías juntas (no discrimina si están vistas o no), para
+/// no obligar a cambiar de pestaña para encontrar algo.
 class CuentasInstagramScreen extends ConsumerStatefulWidget {
   const CuentasInstagramScreen({super.key});
 
@@ -23,15 +26,39 @@ class CuentasInstagramScreen extends ConsumerStatefulWidget {
       _CuentasInstagramScreenState();
 }
 
-class _CuentasInstagramScreenState
-    extends ConsumerState<CuentasInstagramScreen> {
+class _CuentasInstagramScreenState extends ConsumerState<CuentasInstagramScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
   final _busquedaController = TextEditingController();
   String _busqueda = '';
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
   void dispose() {
+    _tabController.dispose();
     _busquedaController.dispose();
     super.dispose();
+  }
+
+  bool _coincide(
+    CuentaInstagram cuenta,
+    Propuesta? propuesta,
+    String consulta,
+  ) {
+    return cuenta.usuario.toLowerCase().contains(consulta) ||
+        cuenta.notas.toLowerCase().contains(consulta) ||
+        (propuesta?.titulo.toLowerCase().contains(consulta) ?? false);
+  }
+
+  List<CuentaInstagram> _ordenarPorUsuario(List<CuentaInstagram> cuentas) {
+    return [...cuentas]..sort(
+      (a, b) => a.usuario.toLowerCase().compareTo(b.usuario.toLowerCase()),
+    );
   }
 
   @override
@@ -40,10 +67,31 @@ class _CuentasInstagramScreenState
     final cuentas = cuentasAsync.value ?? [];
     final cuentasVistas = cuentas.where((c) => c.vista).toList();
     final propuestas = ref.watch(propuestasStreamProvider).value ?? [];
+    final buscando = _busqueda.trim().isNotEmpty;
 
     Propuesta? propuestaDe(CuentaInstagram cuenta) => propuestas
         .cast<Propuesta?>()
         .firstWhere((p) => p?.id == cuenta.propuestaId, orElse: () => null);
+
+    Widget listaVacia(String mensaje) => Center(child: Text(mensaje));
+
+    Widget listaDe(List<CuentaInstagram> lista) {
+      if (lista.isEmpty) {
+        return listaVacia(
+          buscando
+              ? 'No se encontró ninguna cuenta con ese criterio.'
+              : 'No hay cuentas acá.',
+        );
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: lista.length,
+        itemBuilder: (context, index) => _TarjetaCuenta(
+          cuenta: lista[index],
+          propuesta: propuestaDe(lista[index]),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -75,6 +123,18 @@ class _CuentasInstagramScreenState
             onPressed: () => ref.invalidate(cuentasInstagramStreamProvider),
           ),
         ],
+        bottom: buscando
+            ? null
+            : TabBar(
+                controller: _tabController,
+                tabs: [
+                  Tab(
+                    text:
+                        'No vistas (${cuentas.where((c) => !c.vista).length})',
+                  ),
+                  Tab(text: 'Vistas (${cuentasVistas.length})'),
+                ],
+              ),
       ),
       body: Column(
         children: [
@@ -103,49 +163,29 @@ class _CuentasInstagramScreenState
             child: cuentasAsync.when(
               data: (cuentas) {
                 if (cuentas.isEmpty) {
-                  return const Center(
-                    child: Text('Todavía no guardaste ninguna cuenta.'),
-                  );
+                  return listaVacia('Todavía no guardaste ninguna cuenta.');
                 }
 
-                final consulta = _busqueda.trim().toLowerCase();
-                final filtradas = consulta.isEmpty
-                    ? cuentas
-                    : cuentas.where((cuenta) {
-                        final propuesta = propuestaDe(cuenta);
-                        return cuenta.usuario.toLowerCase().contains(
-                              consulta,
-                            ) ||
-                            cuenta.notas.toLowerCase().contains(consulta) ||
-                            (propuesta?.titulo.toLowerCase().contains(
-                                  consulta,
-                                ) ??
-                                false);
-                      }).toList();
-
-                if (filtradas.isEmpty) {
-                  return const Center(
-                    child: Text('No se encontró ninguna cuenta con ese criterio.'),
+                if (buscando) {
+                  final consulta = _busqueda.trim().toLowerCase();
+                  final resultado = _ordenarPorUsuario(
+                    cuentas
+                        .where((c) => _coincide(c, propuestaDe(c), consulta))
+                        .toList(),
                   );
+                  return listaDe(resultado);
                 }
 
-                final ordenadas = [...filtradas]..sort((a, b) {
-                  if (a.vista != b.vista) return a.vista ? 1 : -1;
-                  return a.usuario.toLowerCase().compareTo(
-                    b.usuario.toLowerCase(),
-                  );
-                });
-
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: ordenadas.length,
-                  itemBuilder: (context, index) {
-                    final cuenta = ordenadas[index];
-                    return _TarjetaCuenta(
-                      cuenta: cuenta,
-                      propuesta: propuestaDe(cuenta),
-                    );
-                  },
+                return TabBarView(
+                  controller: _tabController,
+                  children: [
+                    listaDe(
+                      _ordenarPorUsuario(
+                        cuentas.where((c) => !c.vista).toList(),
+                      ),
+                    ),
+                    listaDe(_ordenarPorUsuario(cuentasVistas)),
+                  ],
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -241,15 +281,12 @@ class _TarjetaCuenta extends ConsumerWidget {
                     children: [
                       Text(
                         '@${cuenta.usuario}',
-                        style: Theme.of(context).textTheme.titleLarge
-                            ?.copyWith(
-                              fontWeight: vista
-                                  ? FontWeight.w500
-                                  : FontWeight.bold,
-                              color: vista
-                                  ? colorScheme.onSurfaceVariant
-                                  : colorScheme.onSurface,
-                            ),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: vista ? FontWeight.w500 : FontWeight.bold,
+                          color: vista
+                              ? colorScheme.onSurfaceVariant
+                              : colorScheme.onSurface,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Wrap(
@@ -268,9 +305,7 @@ class _TarjetaCuenta extends ConsumerWidget {
                                   ? colorScheme.onSurfaceVariant
                                   : colorScheme.onPrimaryContainer,
                             ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
                             visualDensity: VisualDensity.compact,
                             materialTapTargetSize:
                                 MaterialTapTargetSize.shrinkWrap,
