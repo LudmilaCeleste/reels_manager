@@ -1,33 +1,52 @@
 import '../entities/colaboracion.dart';
 
-/// Totales calculados a partir de la lista de colaboraciones: cuánto ya
-/// se ganó en total. Como el equipo solo carga colaboraciones ya
-/// cerradas (confirmadas o publicadas — no hay estado de "propuesta"),
-/// alcanza con sumar el precio de todas las que lo tengan cargado. Es
-/// una función pura de dominio, sin Flutter ni Firebase.
+/// Totales calculados a partir de la lista de colaboraciones, separando
+/// lo que ya se cobró (pagada o publicada — publicada implica pagada)
+/// de lo que todavía está pendiente (confirmada sin pagar). Es una
+/// función pura de dominio, sin Flutter ni Firebase.
 class TotalesColaboraciones {
   const TotalesColaboraciones({
-    required this.totalGanado,
-    required this.cantidadGanado,
+    required this.totalCobrado,
+    required this.cantidadCobrado,
+    required this.totalPendiente,
+    required this.cantidadPendiente,
   });
 
-  final double totalGanado;
-  final int cantidadGanado;
+  final double totalCobrado;
+  final int cantidadCobrado;
+  final double totalPendiente;
+  final int cantidadPendiente;
+
+  double get totalGeneral => totalCobrado + totalPendiente;
+  int get cantidadGeneral => cantidadCobrado + cantidadPendiente;
 }
 
+bool _estaCobrada(Colaboracion colaboracion) =>
+    colaboracion.estado == EstadoColaboracion.pagada ||
+    colaboracion.estado == EstadoColaboracion.publicada;
+
 TotalesColaboraciones calcularTotales(List<Colaboracion> colaboraciones) {
-  var totalGanado = 0.0;
-  var cantidadGanado = 0;
+  var totalCobrado = 0.0;
+  var cantidadCobrado = 0;
+  var totalPendiente = 0.0;
+  var cantidadPendiente = 0;
 
   for (final colaboracion in colaboraciones) {
     final precio = colaboracion.precio;
     if (precio == null) continue;
-    totalGanado += precio;
-    cantidadGanado++;
+    if (_estaCobrada(colaboracion)) {
+      totalCobrado += precio;
+      cantidadCobrado++;
+    } else {
+      totalPendiente += precio;
+      cantidadPendiente++;
+    }
   }
 
   return TotalesColaboraciones(
-    totalGanado: totalGanado,
-    cantidadGanado: cantidadGanado,
+    totalCobrado: totalCobrado,
+    cantidadCobrado: cantidadCobrado,
+    totalPendiente: totalPendiente,
+    cantidadPendiente: cantidadPendiente,
   );
 }

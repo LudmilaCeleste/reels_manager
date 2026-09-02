@@ -6,11 +6,12 @@ import '../../domain/entities/colaboracion.dart';
 import '../../domain/usecases/calcular_totales.dart';
 import '../providers/colaboracion_providers.dart';
 
-/// Resumen de plata: cuánto se ganó en total con las colaboraciones
-/// cargadas (todas están confirmadas o publicadas — no hay estado de
-/// propuesta sin cerrar), calculado a partir de las mismas
-/// colaboraciones — no es una colección aparte en Firestore, se
-/// recalcula solo cuando algo cambia.
+/// Resumen de plata: cuánto ya se cobró y cuánto queda pendiente de
+/// cobro con las colaboraciones cargadas, calculado a partir de las
+/// mismas colaboraciones — no es una colección aparte en Firestore, se
+/// recalcula solo cuando algo cambia. Una colaboración cuenta como
+/// cobrada si está "Pagada" o "Publicada"; si está "Confirmada (sin
+/// pagar)" cuenta como pendiente.
 class GananciasScreen extends ConsumerWidget {
   const GananciasScreen({super.key});
 
@@ -32,14 +33,25 @@ class GananciasScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(20),
             children: [
               _TarjetaTotal(
-                titulo: 'Total ganado',
-                subtitulo: totales.cantidadGanado == 0
-                    ? 'Todavía no hay colaboraciones con precio cargado.'
-                    : 'De ${totales.cantidadGanado} colaboración${totales.cantidadGanado == 1 ? '' : 'es'} con precio cargado.',
-                monto: totales.totalGanado,
+                titulo: 'Cobrado',
+                subtitulo: totales.cantidadCobrado == 0
+                    ? 'Todavía no cobraste ninguna colaboración.'
+                    : 'De ${totales.cantidadCobrado} colaboración${totales.cantidadCobrado == 1 ? '' : 'es'} pagada${totales.cantidadCobrado == 1 ? '' : 's'} o publicada${totales.cantidadCobrado == 1 ? '' : 's'}.',
+                monto: totales.totalCobrado,
                 colorFondo: colorScheme.primary,
                 colorTexto: colorScheme.onPrimary,
                 icono: Icons.paid_outlined,
+              ),
+              const SizedBox(height: 16),
+              _TarjetaTotal(
+                titulo: 'Pendiente de cobro',
+                subtitulo: totales.cantidadPendiente == 0
+                    ? 'No hay colaboraciones confirmadas sin pagar.'
+                    : 'De ${totales.cantidadPendiente} colaboración${totales.cantidadPendiente == 1 ? '' : 'es'} confirmada${totales.cantidadPendiente == 1 ? '' : 's'} sin pagar.',
+                monto: totales.totalPendiente,
+                colorFondo: colorScheme.tertiaryContainer,
+                colorTexto: colorScheme.onTertiaryContainer,
+                icono: Icons.hourglass_bottom_outlined,
               ),
               const SizedBox(height: 28),
               if (conPrecio.isEmpty)

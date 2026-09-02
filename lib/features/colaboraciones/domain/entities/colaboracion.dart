@@ -2,12 +2,16 @@ import 'package:equatable/equatable.dart';
 
 /// El equipo solo carga una colaboración una vez que ya está cerrada
 /// con el cliente — no se anotan propuestas sueltas todavía sin
-/// confirmar. Por eso acá solo hay dos estados posibles.
-enum EstadoColaboracion { confirmada, publicada }
+/// confirmar. "Confirmada" no implica que ya se cobró: `pagada` separa
+/// ese caso de una que todavía se está esperando cobrar. Una vez
+/// publicada se entiende que también está pagada (no hace falta un
+/// cuarto estado para eso).
+enum EstadoColaboracion { confirmada, pagada, publicada }
 
 extension EstadoColaboracionLabel on EstadoColaboracion {
   String get etiqueta => switch (this) {
-    EstadoColaboracion.confirmada => 'Confirmada',
+    EstadoColaboracion.confirmada => 'Confirmada (sin pagar)',
+    EstadoColaboracion.pagada => 'Pagada',
     EstadoColaboracion.publicada => 'Publicada',
   };
 }
