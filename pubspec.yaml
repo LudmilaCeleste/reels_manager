@@ -39,6 +39,10 @@ dependencies:
   # GitHub, ver lib/core/utils/verificar_actualizacion.dart)
   package_info_plus: ^9.0.1
 
+  # Grilla de Notas con tarjetas de distinto alto segun el largo de cada
+  # nota (estilo Google Keep)
+  flutter_staggered_grid_view: ^0.7.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

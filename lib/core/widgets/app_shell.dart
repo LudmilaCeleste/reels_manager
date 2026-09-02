@@ -7,6 +7,7 @@ import '../../features/calendario/presentation/screens/calendario_screen.dart';
 import '../../features/colaboraciones/presentation/screens/colaboraciones_screen.dart';
 import '../../features/colaboraciones/presentation/screens/ganancias_screen.dart';
 import '../../features/cuentas_instagram/presentation/screens/cuentas_instagram_screen.dart';
+import '../../features/notas/presentation/screens/notas_screen.dart';
 import '../../features/propuestas/presentation/screens/propuestas_screen.dart';
 import '../../features/reels/presentation/screens/reels_screen.dart';
 import '../providers/actualizacion_providers.dart';
@@ -45,6 +46,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       CuentasInstagramScreen(),
     ),
     _Seccion('Propuestas', Icons.campaign_outlined, PropuestasScreen()),
+    _Seccion('Notas', Icons.sticky_note_2_outlined, NotasScreen()),
     _Seccion('Cuenta', Icons.person_pin_outlined, CuentaScreen()),
   ];
 
