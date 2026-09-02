@@ -17,7 +17,13 @@ permissions:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    # Fijo a una imagen conocida (no "windows-latest") a propósito: la
+    # primera corrida falló porque Flutter le pidió a CMake el
+    # generador "Visual Studio 16 2019" y esa imagen ya no lo tiene
+    # instalado (Flutter no reconoció bien la versión de VS que trae
+    # "latest" en ese momento). windows-2022 sí trae Visual Studio 2022
+    # completo, que es lo que Flutter espera encontrar.
+    runs-on: windows-2022
     steps:
       # Mismo problema que en las PCs del equipo: un plugin genera rutas
       # de build tan largas que superan el límite de 260 caracteres de
