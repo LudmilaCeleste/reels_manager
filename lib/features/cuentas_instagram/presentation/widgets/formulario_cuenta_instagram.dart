@@ -24,6 +24,11 @@ Future<void> mostrarFormularioCuentaInstagram(
       ref.read(cuentasInstagramStreamProvider).value ?? [];
   final propuestas = ref.read(propuestasStreamProvider).value ?? [];
 
+  // Se captura acá (con el context de afuera, antes de abrir el diálogo)
+  // para poder mostrar el resultado en la pantalla de la lista incluso
+  // después de que el diálogo ya se haya cerrado.
+  final mensajero = ScaffoldMessenger.of(context);
+
   await showDialog<void>(
     context: context,
     builder: (context) => StatefulBuilder(
@@ -108,12 +113,17 @@ Future<void> mostrarFormularioCuentaInstagram(
                   );
                 }
                 if (context.mounted) Navigator.of(context).pop();
+                mensajero.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      esEdicion ? 'Cuenta actualizada.' : 'Cuenta agregada.',
+                    ),
+                  ),
+                );
               } on ArgumentError catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(e.message.toString())),
-                  );
-                }
+                mensajero.showSnackBar(
+                  SnackBar(content: Text(e.message.toString())),
+                );
               }
             },
             child: Text(esEdicion ? 'Actualizar' : 'Guardar'),
