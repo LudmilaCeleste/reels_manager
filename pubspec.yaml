@@ -2,7 +2,7 @@ name: reels_manager
 description: "App para guardar y organizar reels de Instagram: clientes, ejemplos y colaboraciones, con reproduccion del video desde el link."
 publish_to: 'none'
 
-version: 0.9.0+1
+version: 0.9.1+1
 
 environment:
   sdk: ^3.9.2
