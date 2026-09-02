@@ -48,25 +48,26 @@ class _PantallaLoginState extends ConsumerState<PantallaLogin> {
                   // Logo de la app: monograma "AC" (Agus + Cele) en el
                   // color de marca, mismo diseño que el ícono de la
                   // ventana/taskbar (windows/runner/resources/app_icon.ico).
+                  // Agrandado a pedido del usuario (antes era 80x80).
                   Container(
-                    width: 80,
-                    height: 80,
+                    width: 128,
+                    height: 128,
                     decoration: BoxDecoration(
                       color: colorMarca,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(30),
                     ),
                     alignment: Alignment.center,
                     child: const Text(
                       'AC',
                       style: TextStyle(
-                        fontSize: 32,
+                        fontSize: 50,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                         height: 1,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
                   Text(
                     'Gestor de Reels',
                     style: Theme.of(context).textTheme.headlineSmall,
