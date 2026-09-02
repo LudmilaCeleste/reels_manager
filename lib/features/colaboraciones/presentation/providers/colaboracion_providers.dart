@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../calendario/presentation/providers/calendario_providers.dart';
 import '../../data/repositories/colaboracion_repository_firestore.dart';
 import '../../domain/entities/colaboracion.dart';
 import '../../domain/repositories/colaboracion_repository.dart';
@@ -19,17 +20,26 @@ final obtenerColaboracionesProvider = Provider<ObtenerColaboraciones>((ref) {
 });
 
 final agregarColaboracionProvider = Provider<AgregarColaboracion>((ref) {
-  return AgregarColaboracion(ref.watch(colaboracionRepositoryProvider));
+  return AgregarColaboracion(
+    ref.watch(colaboracionRepositoryProvider),
+    ref.watch(calendarioRepositoryProvider),
+  );
 });
 
 final actualizarColaboracionProvider = Provider<ActualizarColaboracion>((
   ref,
 ) {
-  return ActualizarColaboracion(ref.watch(colaboracionRepositoryProvider));
+  return ActualizarColaboracion(
+    ref.watch(colaboracionRepositoryProvider),
+    ref.watch(calendarioRepositoryProvider),
+  );
 });
 
 final eliminarColaboracionProvider = Provider<EliminarColaboracion>((ref) {
-  return EliminarColaboracion(ref.watch(colaboracionRepositoryProvider));
+  return EliminarColaboracion(
+    ref.watch(colaboracionRepositoryProvider),
+    ref.watch(calendarioRepositoryProvider),
+  );
 });
 
 final colaboracionesStreamProvider = StreamProvider<List<Colaboracion>>((

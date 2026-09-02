@@ -15,15 +15,35 @@ import '../widgets/formulario_cuenta_instagram.dart';
 /// Lista de cuentas de Instagram guardadas como referencia. Entrar a
 /// escribirle a una cuenta la marca como "vista" automáticamente; las
 /// que todavía no se revisaron se destacan para que salten a la vista.
-class CuentasInstagramScreen extends ConsumerWidget {
+class CuentasInstagramScreen extends ConsumerStatefulWidget {
   const CuentasInstagramScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CuentasInstagramScreen> createState() =>
+      _CuentasInstagramScreenState();
+}
+
+class _CuentasInstagramScreenState
+    extends ConsumerState<CuentasInstagramScreen> {
+  final _busquedaController = TextEditingController();
+  String _busqueda = '';
+
+  @override
+  void dispose() {
+    _busquedaController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final cuentasAsync = ref.watch(cuentasInstagramStreamProvider);
     final cuentas = cuentasAsync.value ?? [];
     final cuentasVistas = cuentas.where((c) => c.vista).toList();
     final propuestas = ref.watch(propuestasStreamProvider).value ?? [];
+
+    Propuesta? propuestaDe(CuentaInstagram cuenta) => propuestas
+        .cast<Propuesta?>()
+        .firstWhere((p) => p?.id == cuenta.propuestaId, orElse: () => null);
 
     return Scaffold(
       appBar: AppBar(
@@ -56,36 +76,83 @@ class CuentasInstagramScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: cuentasAsync.when(
-        data: (cuentas) {
-          if (cuentas.isEmpty) {
-            return const Center(
-              child: Text('Todavía no guardaste ninguna cuenta.'),
-            );
-          }
-
-          final ordenadas = [...cuentas]..sort((a, b) {
-            if (a.vista != b.vista) return a.vista ? 1 : -1;
-            return a.usuario.toLowerCase().compareTo(b.usuario.toLowerCase());
-          });
-
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: ordenadas.length,
-            itemBuilder: (context, index) {
-              final cuenta = ordenadas[index];
-              final propuesta = propuestas
-                  .cast<Propuesta?>()
-                  .firstWhere(
-                    (p) => p?.id == cuenta.propuestaId,
-                    orElse: () => null,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+            child: TextField(
+              controller: _busquedaController,
+              decoration: InputDecoration(
+                hintText: 'Buscar por usuario, notas o tipo...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _busqueda.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close),
+                        tooltip: 'Limpiar búsqueda',
+                        onPressed: () {
+                          _busquedaController.clear();
+                          setState(() => _busqueda = '');
+                        },
+                      ),
+              ),
+              onChanged: (valor) => setState(() => _busqueda = valor),
+            ),
+          ),
+          Expanded(
+            child: cuentasAsync.when(
+              data: (cuentas) {
+                if (cuentas.isEmpty) {
+                  return const Center(
+                    child: Text('Todavía no guardaste ninguna cuenta.'),
                   );
-              return _TarjetaCuenta(cuenta: cuenta, propuesta: propuesta);
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Error: $error')),
+                }
+
+                final consulta = _busqueda.trim().toLowerCase();
+                final filtradas = consulta.isEmpty
+                    ? cuentas
+                    : cuentas.where((cuenta) {
+                        final propuesta = propuestaDe(cuenta);
+                        return cuenta.usuario.toLowerCase().contains(
+                              consulta,
+                            ) ||
+                            cuenta.notas.toLowerCase().contains(consulta) ||
+                            (propuesta?.titulo.toLowerCase().contains(
+                                  consulta,
+                                ) ??
+                                false);
+                      }).toList();
+
+                if (filtradas.isEmpty) {
+                  return const Center(
+                    child: Text('No se encontró ninguna cuenta con ese criterio.'),
+                  );
+                }
+
+                final ordenadas = [...filtradas]..sort((a, b) {
+                  if (a.vista != b.vista) return a.vista ? 1 : -1;
+                  return a.usuario.toLowerCase().compareTo(
+                    b.usuario.toLowerCase(),
+                  );
+                });
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: ordenadas.length,
+                  itemBuilder: (context, index) {
+                    final cuenta = ordenadas[index];
+                    return _TarjetaCuenta(
+                      cuenta: cuenta,
+                      propuesta: propuestaDe(cuenta),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(child: Text('Error: $error')),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => mostrarFormularioCuentaInstagram(context, ref),

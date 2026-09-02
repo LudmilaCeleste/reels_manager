@@ -1,11 +1,14 @@
 import '../../../../core/utils/normalizar_instagram.dart';
+import '../../../calendario/domain/repositories/calendario_repository.dart';
 import '../entities/colaboracion.dart';
 import '../repositories/colaboracion_repository.dart';
+import 'sincronizar_evento_colaboracion.dart';
 
 class AgregarColaboracion {
-  AgregarColaboracion(this._repository);
+  AgregarColaboracion(this._repository, this._calendarioRepository);
 
   final ColaboracionRepository _repository;
+  final CalendarioRepository _calendarioRepository;
 
   Future<void> call({
     required String nombreCliente,
@@ -16,7 +19,7 @@ class AgregarColaboracion {
     String? reelId,
     double? precio,
     DateTime? fecha,
-  }) {
+  }) async {
     final colaboracion = Colaboracion(
       // TODO(firebase): con Firestore, el id lo genera la propia base.
       id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -29,6 +32,7 @@ class AgregarColaboracion {
       precio: precio,
       fecha: fecha == null ? null : DateTime(fecha.year, fecha.month, fecha.day),
     );
-    return _repository.guardarColaboracion(colaboracion);
+    await _repository.guardarColaboracion(colaboracion);
+    await sincronizarEventoDeColaboracion(_calendarioRepository, colaboracion);
   }
 }
