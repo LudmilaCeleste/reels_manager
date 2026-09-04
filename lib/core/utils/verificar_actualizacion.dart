@@ -7,16 +7,32 @@ import 'package:package_info_plus/package_info_plus.dart';
 /// de Windows ya compilado (ver .github/workflows/release-windows.yml).
 const _repoGithub = 'LudmilaCeleste/reels_manager';
 
+/// Nombre exacto del asset que sube el workflow — tiene que coincidir
+/// con el `Compress-Archive ... -DestinationPath` de
+/// .github/workflows/release-windows.yml.
+const _nombreAssetZip = 'reels_manager-windows.zip';
+
 /// Datos de una versión nueva disponible, listos para mostrarle algo a
-/// la persona y mandarla a descargarla.
+/// la persona y actualizar sola (o mandarla a descargar a mano si el
+/// asset del .zip no está por algún motivo).
 class ActualizacionDisponible {
   const ActualizacionDisponible({
     required this.version,
-    required this.urlDescarga,
+    required this.urlPagina,
+    this.urlZip,
   });
 
   final String version;
-  final String urlDescarga;
+
+  /// Página del release en GitHub, para abrir en el navegador como
+  /// alternativa manual si la autoactualización falla.
+  final String urlPagina;
+
+  /// Link directo de descarga del .zip ya compilado, para la
+  /// autoactualización con un solo click. `null` si por algún motivo el
+  /// release no tiene ese asset (no debería pasar con el workflow
+  /// actual).
+  final String? urlZip;
 }
 
 /// Compara la versión de la app instalada contra el último release
@@ -42,12 +58,20 @@ Future<ActualizacionDisponible?> buscarActualizacionDisponible() async {
     final infoApp = await PackageInfo.fromPlatform();
     if (!_esMasNueva(versionRemota, infoApp.version)) return null;
 
-    final urlDescarga =
+    final urlPagina =
         datos['html_url'] as String? ??
         'https://github.com/$_repoGithub/releases/latest';
+
+    final assets = (datos['assets'] as List<dynamic>?) ?? [];
+    final assetZip = assets.cast<Map<String, dynamic>?>().firstWhere(
+      (a) => a?['name'] == _nombreAssetZip,
+      orElse: () => null,
+    );
+
     return ActualizacionDisponible(
       version: versionRemota,
-      urlDescarga: urlDescarga,
+      urlPagina: urlPagina,
+      urlZip: assetZip?['browser_download_url'] as String?,
     );
   } catch (_) {
     return null;

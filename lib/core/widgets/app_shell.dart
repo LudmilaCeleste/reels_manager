@@ -11,6 +11,8 @@ import '../../features/notas/presentation/screens/notas_screen.dart';
 import '../../features/propuestas/presentation/screens/propuestas_screen.dart';
 import '../../features/reels/presentation/screens/reels_screen.dart';
 import '../providers/actualizacion_providers.dart';
+import '../utils/autoactualizar_app.dart';
+import '../utils/verificar_actualizacion.dart';
 
 /// Shell de navegación de toda la app: en pantallas anchas (escritorio)
 /// muestra un NavigationRail a un costado; en pantallas angostas (celular,
@@ -35,16 +37,8 @@ class _AppShellState extends ConsumerState<AppShell> {
       ColaboracionesScreen(),
     ),
     _Seccion('Ganancias', Icons.paid_outlined, GananciasScreen()),
-    _Seccion(
-      'Calendario',
-      Icons.calendar_month_outlined,
-      CalendarioScreen(),
-    ),
-    _Seccion(
-      'Cuentas IG',
-      Icons.alternate_email,
-      CuentasInstagramScreen(),
-    ),
+    _Seccion('Calendario', Icons.calendar_month_outlined, CalendarioScreen()),
+    _Seccion('Cuentas IG', Icons.alternate_email, CuentasInstagramScreen()),
     _Seccion('Propuestas', Icons.campaign_outlined, PropuestasScreen()),
     _Seccion('Notas', Icons.sticky_note_2_outlined, NotasScreen()),
     _Seccion('Cuenta', Icons.person_pin_outlined, CuentaScreen()),
@@ -103,8 +97,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         children: [
           if (mostrarBanner)
             _BannerActualizacion(
-              version: actualizacion.version,
-              urlDescarga: actualizacion.urlDescarga,
+              actualizacion: actualizacion,
               onCerrar: () => setState(() => _bannerDescartado = true),
             ),
           Expanded(child: cuerpoPrincipal),
@@ -116,18 +109,16 @@ class _AppShellState extends ConsumerState<AppShell> {
 }
 
 /// Aviso de que hay una versión nueva publicada en GitHub Releases, con
-/// un botón para ir a descargarla. Se puede cerrar (queda oculto el
-/// resto de la sesión, vuelve a aparecer si se reinicia la app y sigue
-/// sin actualizarse).
+/// un botón para actualizar con un solo click. Se puede cerrar (queda
+/// oculto el resto de la sesión, vuelve a aparecer si se reinicia la
+/// app y sigue sin actualizarse).
 class _BannerActualizacion extends StatelessWidget {
   const _BannerActualizacion({
-    required this.version,
-    required this.urlDescarga,
+    required this.actualizacion,
     required this.onCerrar,
   });
 
-  final String version;
-  final String urlDescarga;
+  final ActualizacionDisponible actualizacion;
   final VoidCallback onCerrar;
 
   @override
@@ -146,16 +137,13 @@ class _BannerActualizacion extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Hay una versión nueva disponible (v$version).',
+                'Hay una versión nueva disponible (v${actualizacion.version}).',
                 style: TextStyle(color: colorScheme.onTertiaryContainer),
               ),
             ),
             TextButton(
-              onPressed: () => launchUrl(
-                Uri.parse(urlDescarga),
-                mode: LaunchMode.externalApplication,
-              ),
-              child: const Text('Descargar'),
+              onPressed: () => _actualizarAhora(context, actualizacion),
+              child: const Text('Actualizar ahora'),
             ),
             IconButton(
               tooltip: 'Cerrar aviso',
@@ -164,6 +152,106 @@ class _BannerActualizacion extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+Future<void> _actualizarAhora(
+  BuildContext context,
+  ActualizacionDisponible actualizacion,
+) async {
+  final urlZip = actualizacion.urlZip;
+  if (urlZip == null) {
+    // No debería pasar con el workflow actual, pero por las dudas: sin
+    // el asset del .zip no hay nada que autoactualizar, se manda
+    // directo a la página del release.
+    await launchUrl(
+      Uri.parse(actualizacion.urlPagina),
+      mode: LaunchMode.externalApplication,
+    );
+    return;
+  }
+
+  await showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => _DialogoActualizando(
+      urlZip: urlZip,
+      urlPagina: actualizacion.urlPagina,
+    ),
+  );
+}
+
+/// Diálogo que muestra el progreso de la autoactualización. Si termina
+/// bien, la app se cierra sola desde adentro de `AutoActualizador` (para
+/// soltar el archivo del .exe) y este diálogo nunca llega a "cerrarse"
+/// normalmente — la ventana entera desaparece y se vuelve a abrir con
+/// la versión nueva. Si algo falla, ofrece el link manual como
+/// alternativa.
+class _DialogoActualizando extends StatelessWidget {
+  const _DialogoActualizando({required this.urlZip, required this.urlPagina});
+
+  final String urlZip;
+  final String urlPagina;
+
+  String _textoEtapa(EtapaActualizacion etapa) => switch (etapa) {
+    EtapaActualizacion.descargando => 'Descargando la versión nueva...',
+    EtapaActualizacion.extrayendo => 'Preparando los archivos...',
+    EtapaActualizacion.reiniciando => 'Reiniciando la app...',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Actualizando'),
+      content: StreamBuilder<ProgresoActualizacion>(
+        stream: const AutoActualizador().aplicar(urlZip),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('No se pudo actualizar sola: ${snapshot.error}'),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cerrar'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () {
+                        launchUrl(
+                          Uri.parse(urlPagina),
+                          mode: LaunchMode.externalApplication,
+                        );
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Descargar manual'),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          }
+
+          final progreso = snapshot.data;
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _textoEtapa(progreso?.etapa ?? EtapaActualizacion.descargando),
+              ),
+              const SizedBox(height: 20),
+              LinearProgressIndicator(value: progreso?.fraccion),
+            ],
+          );
+        },
       ),
     );
   }
