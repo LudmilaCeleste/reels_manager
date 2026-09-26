@@ -6,6 +6,8 @@ import '../../features/auth/presentation/screens/cuenta_screen.dart';
 import '../../features/calendario/presentation/screens/calendario_screen.dart';
 import '../../features/colaboraciones/presentation/screens/colaboraciones_screen.dart';
 import '../../features/colaboraciones/presentation/screens/ganancias_screen.dart';
+import '../../features/consultas/presentation/providers/consulta_providers.dart';
+import '../../features/consultas/presentation/screens/consultas_screen.dart';
 import '../../features/cuentas_instagram/presentation/screens/cuentas_instagram_screen.dart';
 import '../../features/notas/presentation/screens/notas_screen.dart';
 import '../../features/propuestas/presentation/screens/propuestas_screen.dart';
@@ -40,6 +42,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     _Seccion('Calendario', Icons.calendar_month_outlined, CalendarioScreen()),
     _Seccion('Cuentas IG', Icons.alternate_email, CuentasInstagramScreen()),
     _Seccion('Propuestas', Icons.campaign_outlined, PropuestasScreen()),
+    _Seccion('Consultas', Icons.inbox_outlined, ConsultasScreen()),
     _Seccion('Notas', Icons.sticky_note_2_outlined, NotasScreen()),
     _Seccion('Cuenta', Icons.person_pin_outlined, CuentaScreen()),
   ];
@@ -56,6 +59,13 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     final actualizacion = ref.watch(actualizacionDisponibleProvider).value;
     final mostrarBanner = actualizacion != null && !_bannerDescartado;
+    final consultasNuevas = ref.watch(cantidadConsultasNuevasProvider);
+
+    // Globito con la cantidad de consultas de la web sin responder
+    Widget icono(_Seccion s) =>
+        s.pantalla is ConsultasScreen && consultasNuevas > 0
+        ? Badge(label: Text('$consultasNuevas'), child: Icon(s.icono))
+        : Icon(s.icono);
 
     final Widget cuerpoPrincipal;
     final Widget? barraInferior;
@@ -70,7 +80,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             destinations: [
               for (final s in _secciones)
                 NavigationRailDestination(
-                  icon: Icon(s.icono),
+                  icon: icono(s),
                   label: Text(s.titulo),
                 ),
             ],
@@ -87,7 +97,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         onDestinationSelected: (i) => setState(() => _indice = i),
         destinations: [
           for (final s in _secciones)
-            NavigationDestination(icon: Icon(s.icono), label: s.titulo),
+            NavigationDestination(icon: icono(s), label: s.titulo),
         ],
       );
     }

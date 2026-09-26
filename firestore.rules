@@ -26,5 +26,40 @@ service cloud.firestore {
     match /{document=**} {
       allow read, write: if esUsuarioDelEquipo();
     }
+
+    // Consultas del formulario de la web de AC Marketing. Cualquiera
+    // puede CREAR una (sin login), pero solo con estos campos, tipos y
+    // largos, y siempre como "nueva". El sector y los intereses tienen
+    // que coincidir con las opciones del formulario (la web los manda
+    // siempre en español, aunque la persona la esté viendo en inglés).
+    // Nadie de afuera puede leer, editar ni borrar: eso lo cubre la
+    // regla del equipo de arriba.
+    match /consultas/{consultaId} {
+      allow create: if esConsultaValida(request.resource.data);
+    }
+
+    function esTextoCorto(valor, minimo, maximo) {
+      return valor is string && valor.size() >= minimo && valor.size() <= maximo;
+    }
+
+    function esConsultaValida(d) {
+      return d.keys().hasOnly(['nombre', 'negocio', 'sector', 'intereses',
+          'contacto', 'mensaje', 'idioma', 'origen', 'estado', 'creadaEn'])
+        && d.keys().hasAll(['nombre', 'negocio', 'sector', 'intereses',
+          'contacto', 'mensaje', 'idioma', 'origen', 'estado', 'creadaEn'])
+        && esTextoCorto(d.nombre, 2, 60)
+        && esTextoCorto(d.negocio, 0, 80)
+        && d.sector in ['Restaurante', 'Bar', 'Tienda', 'Estética', 'Ocio',
+          'Hotel', 'Otro']
+        && esTextoCorto(d.contacto, 6, 80)
+        && esTextoCorto(d.mensaje, 0, 800)
+        && d.intereses is list
+        && d.intereses.hasOnly(['NFC reseñas', 'NFC carta', 'Colaboración',
+          'Gestión de redes', 'Web', 'Sistema restaurante'])
+        && d.idioma in ['es', 'en']
+        && d.origen == 'web'
+        && d.estado == 'nueva'
+        && d.creadaEn == request.time;
+    }
   }
 }
