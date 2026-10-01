@@ -11,7 +11,7 @@ extension EstadoConsultaLabel on EstadoConsulta {
 }
 
 /// Una consulta que dejó alguien en el formulario de contacto de la web
-/// de AC Marketing. La web solo puede crearlas (ver `firestore.rules`);
+/// de AceMedia Marketing. La web solo puede crearlas (ver `firestore.rules`);
 /// el equipo las lee y las va marcando desde la sección Consultas.
 class Consulta extends Equatable {
   const Consulta({

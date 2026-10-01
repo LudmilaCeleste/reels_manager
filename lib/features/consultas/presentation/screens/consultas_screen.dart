@@ -106,16 +106,16 @@ class _TarjetaConsulta extends ConsumerWidget {
 
   Uri _enlaceRespuesta() {
     final saludo = consulta.idioma == 'en'
-        ? 'Hi ${consulta.nombre}! This is AC Marketing, thanks for your '
+        ? 'Hi ${consulta.nombre}! This is AceMedia Marketing, thanks for your '
               'message on our website 😊'
-        : '¡Hola ${consulta.nombre}! Te escribimos de AC Marketing por tu '
+        : '¡Hola ${consulta.nombre}! Te escribimos de AceMedia Marketing por tu '
               'consulta en la web 😊';
     if (consulta.contactoEsEmail) {
       return Uri(
         scheme: 'mailto',
         path: consulta.contacto.trim(),
         query:
-            'subject=${Uri.encodeComponent('AC Marketing')}'
+            'subject=${Uri.encodeComponent('AceMedia Marketing')}'
             '&body=${Uri.encodeComponent(saludo)}',
       );
     }
