@@ -27,11 +27,13 @@ service cloud.firestore {
       allow read, write: if esUsuarioDelEquipo();
     }
 
-    // Consultas del formulario de la web de AC Marketing. Cualquiera
+    // Consultas del formulario de la web de AceMedia Marketing. Cualquiera
     // puede CREAR una (sin login), pero solo con estos campos, tipos y
     // largos, y siempre como "nueva". El sector y los intereses tienen
     // que coincidir con las opciones del formulario (la web los manda
     // siempre en español, aunque la persona la esté viendo en inglés).
+    // Los intereses son los packs de la sección Ofertas de la web: si se
+    // cambia el nombre de un pack allá, hay que cambiarlo también acá.
     // Nadie de afuera puede leer, editar ni borrar: eso lo cubre la
     // regla del equipo de arriba.
     match /consultas/{consultaId} {
@@ -54,8 +56,12 @@ service cloud.firestore {
         && esTextoCorto(d.contacto, 6, 80)
         && esTextoCorto(d.mensaje, 0, 800)
         && d.intereses is list
-        && d.intereses.hasOnly(['NFC reseñas', 'NFC carta', 'Colaboración',
-          'Gestión de redes', 'Web', 'Sistema restaurante'])
+        && d.intereses.size() <= 10
+        && d.intereses.hasOnly(['NFC Reseñas Google (1 tag)',
+          'NFC Reseñas Google (Pack 3)', 'NFC Reseñas Google (Pack 5)',
+          'Combo Explosión', 'Colaboración', 'Pack Carta en Mesa',
+          'Gestión de Redes', 'Sistema Restaurante', 'Web a medida',
+          'Aún no lo tengo claro'])
         && d.idioma in ['es', 'en']
         && d.origen == 'web'
         && d.estado == 'nueva'
