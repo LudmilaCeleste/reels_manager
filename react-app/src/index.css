@@ -1,0 +1,158 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/plus-jakarta-sans';
+
+/* Modo oscuro por clase (la pone el selector de tema o el sistema). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
+
+  /* Verde agua de la marca (el mismo #1FB6A6 de la app de Flutter). */
+  --color-brand-50: #effcfa;
+  --color-brand-100: #d5f7f1;
+  --color-brand-200: #aeeee3;
+  --color-brand-300: #7ae0d2;
+  --color-brand-400: #45cbbc;
+  --color-brand-500: #1fb6a6;
+  --color-brand-600: #14928a;
+  --color-brand-700: #14756f;
+  --color-brand-800: #155d5a;
+  --color-brand-900: #164d4a;
+  --color-brand-950: #062e2d;
+
+  /* Colores semánticos que cambian con el tema. */
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+
+  --shadow-soft: 0 1px 2px rgb(8 40 38 / 0.04), 0 8px 24px -12px rgb(8 40 38 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(8 40 38 / 0.05), 0 18px 36px -16px rgb(8 40 38 / 0.22);
+  --shadow-pop: 0 4px 8px rgb(8 40 38 / 0.06), 0 28px 60px -20px rgb(8 40 38 / 0.34);
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-pulse-ring: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgb(31 182 166 / 0.45); }
+    70% { box-shadow: 0 0 0 12px rgb(31 182 166 / 0); }
+    100% { box-shadow: 0 0 0 0 rgb(31 182 166 / 0); }
+  }
+}
+
+:root {
+  --canvas: #f2f7f7;
+  --surface: #ffffff;
+  --surface2: #f5f9f9;
+  --line: #e0eaea;
+  --ink: #0f2423;
+  --muted: #587170;
+  --faint: #8ca1a0;
+  color-scheme: light;
+}
+
+.dark {
+  --canvas: #061112;
+  --surface: #0d1c1e;
+  --surface2: #122527;
+  --line: #1c3335;
+  --ink: #e6f3f2;
+  --muted: #94b0ae;
+  --faint: #65807e;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background-color: var(--canvas);
+  background-image:
+    radial-gradient(60rem 38rem at 8% -12%, rgb(31 182 166 / 0.13), transparent 62%),
+    radial-gradient(46rem 30rem at 104% 2%, rgb(99 102 241 / 0.07), transparent 58%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.dark body {
+  background-image:
+    radial-gradient(60rem 38rem at 8% -12%, rgb(31 182 166 / 0.14), transparent 62%),
+    radial-gradient(46rem 30rem at 104% 2%, rgb(99 102 241 / 0.1), transparent 58%);
+}
+
+::selection {
+  background: rgb(31 182 166 / 0.28);
+}
+
+/* Barras de scroll finas y discretas. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+/* El texto de las tarjetas se puede seleccionar (contacto, mensajes). */
+.selectable {
+  user-select: text;
+}
+
+/* Grilla tipo Keep para Notas: tarjetas de distinto alto. */
+.masonry {
+  column-gap: 1rem;
+  columns: 1;
+}
+@media (min-width: 640px) {
+  .masonry { columns: 2; }
+}
+@media (min-width: 1024px) {
+  .masonry { columns: 3; }
+}
+@media (min-width: 1536px) {
+  .masonry { columns: 4; }
+}
+.masonry > * {
+  break-inside: avoid;
+  margin-bottom: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
