@@ -2,7 +2,7 @@ name: reels_manager
 description: "AceMedia Marketing: app interna de la agencia para organizar reels, colaboraciones, abonos mensuales, tareas, calendario y consultas de clientes."
 publish_to: 'none'
 
-version: 0.10.1+1
+version: 0.11.0+1
 
 environment:
   sdk: ^3.9.2
