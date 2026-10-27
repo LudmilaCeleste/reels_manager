@@ -12,6 +12,9 @@ import '../../features/cuentas_instagram/presentation/screens/cuentas_instagram_
 import '../../features/notas/presentation/screens/notas_screen.dart';
 import '../../features/propuestas/presentation/screens/propuestas_screen.dart';
 import '../../features/reels/presentation/screens/reels_screen.dart';
+import '../../features/tareas/presentation/providers/tarea_providers.dart';
+import '../../features/tareas/presentation/screens/tareas_screen.dart';
+import '../../features/tareas/presentation/widgets/banner_recordatorios.dart';
 import '../providers/actualizacion_providers.dart';
 import '../utils/autoactualizar_app.dart';
 import '../utils/verificar_actualizacion.dart';
@@ -30,6 +33,7 @@ class AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<AppShell> {
   int _indice = 0;
   bool _bannerDescartado = false;
+  DateTime? _avisosDescartadosEl;
 
   static const _secciones = [
     _Seccion('Reels', Icons.play_circle_outline, ReelsScreen()),
@@ -39,6 +43,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       ColaboracionesScreen(),
     ),
     _Seccion('Ganancias', Icons.paid_outlined, GananciasScreen()),
+    _Seccion('Tareas', Icons.task_alt_outlined, TareasScreen()),
     _Seccion('Calendario', Icons.calendar_month_outlined, CalendarioScreen()),
     _Seccion('Cuentas IG', Icons.alternate_email, CuentasInstagramScreen()),
     _Seccion('Propuestas', Icons.campaign_outlined, PropuestasScreen()),
@@ -59,13 +64,33 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     final actualizacion = ref.watch(actualizacionDisponibleProvider).value;
     final mostrarBanner = actualizacion != null && !_bannerDescartado;
-    final consultasNuevas = ref.watch(cantidadConsultasNuevasProvider);
 
-    // Globito con la cantidad de consultas de la web sin responder
-    Widget icono(_Seccion s) =>
-        s.pantalla is ConsultasScreen && consultasNuevas > 0
-        ? Badge(label: Text('$consultasNuevas'), child: Icon(s.icono))
-        : Icon(s.icono);
+    // Recordatorio de tareas automáticas (por ejemplo lunes, miércoles y
+    // viernes). Cerrarlo lo oculta solo por hoy: mañana vuelve a avisar
+    // si todavía falta algo.
+    final avisos = ref.watch(recordatoriosDeHoyProvider);
+    final ahora = ref.watch(diaActualProvider).value ?? DateTime.now();
+    final hoy = DateTime(ahora.year, ahora.month, ahora.day);
+    final mostrarAvisos = avisos.isNotEmpty && _avisosDescartadosEl != hoy;
+    final consultasNuevas = ref.watch(cantidadConsultasNuevasProvider);
+    final tareasUrgentes = ref.watch(cantidadTareasUrgentesProvider);
+
+    // Crea las tareas automáticas que toquen (una vez por sesión). El
+    // resultado no se usa: alcanza con que se dispare.
+    ref.watch(generarTareasAlIniciarProvider);
+
+    // Globitos: consultas de la web sin responder, y tareas vencidas o
+    // que vencen hoy.
+    Widget icono(_Seccion s) {
+      final cantidad = s.pantalla is ConsultasScreen
+          ? consultasNuevas
+          : s.pantalla is TareasScreen
+          ? tareasUrgentes
+          : 0;
+      return cantidad > 0
+          ? Badge(label: Text('$cantidad'), child: Icon(s.icono))
+          : Icon(s.icono);
+    }
 
     final Widget cuerpoPrincipal;
     final Widget? barraInferior;
@@ -73,17 +98,28 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (esEscritorio) {
       cuerpoPrincipal = Row(
         children: [
-          NavigationRail(
-            selectedIndex: _indice,
-            onDestinationSelected: (i) => setState(() => _indice = i),
-            labelType: NavigationRailLabelType.all,
-            destinations: [
-              for (final s in _secciones)
-                NavigationRailDestination(
-                  icon: icono(s),
-                  label: Text(s.titulo),
+          // Con tantas secciones, en una pantalla baja el menú no entra:
+          // se deja scrollear en vez de desbordarse.
+          LayoutBuilder(
+            builder: (context, restricciones) => SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: restricciones.maxHeight),
+                child: IntrinsicHeight(
+                  child: NavigationRail(
+                    selectedIndex: _indice,
+                    onDestinationSelected: (i) => setState(() => _indice = i),
+                    labelType: NavigationRailLabelType.all,
+                    destinations: [
+                      for (final s in _secciones)
+                        NavigationRailDestination(
+                          icon: icono(s),
+                          label: Text(s.titulo),
+                        ),
+                    ],
+                  ),
                 ),
-            ],
+              ),
+            ),
           ),
           const VerticalDivider(width: 1),
           Expanded(child: contenido),
@@ -105,6 +141,16 @@ class _AppShellState extends ConsumerState<AppShell> {
     return Scaffold(
       body: Column(
         children: [
+          if (mostrarAvisos)
+            BannerRecordatorios(
+              avisos: avisos,
+              onVerTareas: () => setState(
+                () => _indice = _secciones.indexWhere(
+                  (s) => s.pantalla is TareasScreen,
+                ),
+              ),
+              onCerrar: () => setState(() => _avisosDescartadosEl = hoy),
+            ),
           if (mostrarBanner)
             _BannerActualizacion(
               actualizacion: actualizacion,

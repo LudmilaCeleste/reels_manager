@@ -1,6 +1,8 @@
-# reels_manager
+# AceMedia Marketing (`reels_manager`)
 
-App para guardar y organizar reels de Instagram (ejemplos, colaboraciones con datos del cliente, calendario del equipo), con reproducción del video directo desde el link.
+App interna de la agencia: reels de Instagram con reproducción desde el link, colaboraciones puntuales y **abonos mensuales** (con historial de pagos por mes), ganancias (cobrado / pendiente), **tareas** (incluidas las **automáticas** que se generan solas cada semana o mes, con opción de ir al calendario), calendario del equipo, cuentas de Instagram, propuestas, notas y consultas de la web.
+
+El nombre que se ve en la app se define en `lib/core/config/nombre_app.dart`. El paquete, el `.exe` y el `.zip` de los releases se siguen llamando `reels_manager` a propósito: la autoactualización de las copias ya instaladas depende de esos nombres.
 
 Ver [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) para la arquitectura, el stack elegido y el plan por etapas.
 
