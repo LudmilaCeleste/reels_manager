@@ -5,196 +5,248 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/utils/formatear_precio.dart';
 import '../../../../core/utils/instagram_links.dart';
 import '../../../../core/widgets/confirmar_eliminacion.dart';
+import '../../../abonos/presentation/widgets/formulario_abono.dart';
+import '../../../abonos/presentation/widgets/lista_abonos.dart';
 import '../../domain/entities/colaboracion.dart';
 import '../providers/colaboracion_providers.dart';
 import '../widgets/formulario_colaboracion.dart';
 
-class ColaboracionesScreen extends ConsumerWidget {
+/// Colaboraciones y abonos del equipo, en dos pestañas: las
+/// "Puntuales" se cobran una sola vez; las "Mensuales" son clientes que
+/// pagan una cuota fija por mes (ver el feature `abonos`). El botón `+`
+/// crea lo que corresponde a la pestaña abierta.
+class ColaboracionesScreen extends ConsumerStatefulWidget {
   const ColaboracionesScreen({super.key});
+
+  @override
+  ConsumerState<ColaboracionesScreen> createState() =>
+      _ColaboracionesScreenState();
+}
+
+class _ColaboracionesScreenState extends ConsumerState<ColaboracionesScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this)
+      ..addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enMensuales = _tabController.index == 1;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Colaboraciones'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Puntuales'),
+            Tab(text: 'Mensuales (abonos)'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: const [_ColaboracionesPuntuales(), ListaAbonos()],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => enMensuales
+            ? mostrarFormularioAbono(context, ref)
+            : mostrarFormularioColaboracion(context, ref),
+        tooltip: enMensuales ? 'Nuevo abono mensual' : 'Nueva colaboración',
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class _ColaboracionesPuntuales extends ConsumerWidget {
+  const _ColaboracionesPuntuales();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colaboracionesAsync = ref.watch(colaboracionesStreamProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Colaboraciones')),
-      body: colaboracionesAsync.when(
-        data: (colaboraciones) {
-          if (colaboraciones.isEmpty) {
-            return const Center(
-              child: Text('Todavía no cargaste ninguna colaboración.'),
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: colaboraciones.length,
-            itemBuilder: (context, index) {
-              final colaboracion = colaboraciones[index];
-              final tieneInstagram = colaboracion.instagramCliente.isNotEmpty;
-              final tieneNotas = colaboracion.notasCliente.isNotEmpty;
-              final tienePrecio = colaboracion.precio != null;
-              final tieneFecha = colaboracion.fecha != null;
+    return colaboracionesAsync.when(
+      data: (colaboraciones) {
+        if (colaboraciones.isEmpty) {
+          return const Center(
+            child: Text('Todavía no cargaste ninguna colaboración.'),
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          itemCount: colaboraciones.length,
+          itemBuilder: (context, index) {
+            final colaboracion = colaboraciones[index];
+            final tieneInstagram = colaboracion.instagramCliente.isNotEmpty;
+            final tieneNotas = colaboracion.notasCliente.isNotEmpty;
+            final tienePrecio = colaboracion.precio != null;
+            final tieneFecha = colaboracion.fecha != null;
 
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 18,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.handshake_outlined, size: 28),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  colaboracion.nombreCliente,
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.titleLarge,
-                                ),
-                                if (tieneInstagram)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4),
-                                    child: Text(
-                                      '@${colaboracion.instagramCliente}',
-                                    ),
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 18,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.handshake_outlined, size: 28),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                colaboracion.nombreCliente,
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              if (tieneInstagram)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    '@${colaboracion.instagramCliente}',
                                   ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Chip(label: Text(colaboracion.estado.etiqueta)),
-                          PopupMenuButton<String>(
-                            tooltip: 'Más opciones',
-                            onSelected: (opcion) async {
-                              if (opcion == 'editar') {
-                                await mostrarFormularioColaboracion(
-                                  context,
-                                  ref,
-                                  existente: colaboracion,
-                                );
-                              } else if (opcion == 'eliminar') {
-                                final confirmado = await confirmarEliminacion(
-                                  context,
-                                  titulo:
-                                      '¿Eliminar a ${colaboracion.nombreCliente}?',
-                                );
-                                if (confirmado) {
-                                  await ref.read(eliminarColaboracionProvider)(
-                                    colaboracion.id,
-                                  );
-                                }
-                              }
-                            },
-                            itemBuilder: (context) => const [
-                              PopupMenuItem(
-                                value: 'editar',
-                                child: ListTile(
-                                  leading: Icon(Icons.edit_outlined),
-                                  title: Text('Editar'),
                                 ),
-                              ),
-                              PopupMenuItem(
-                                value: 'eliminar',
-                                child: ListTile(
-                                  leading: Icon(Icons.delete_outline),
-                                  title: Text('Eliminar'),
-                                ),
-                              ),
                             ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Chip(label: Text(colaboracion.estado.etiqueta)),
+                        PopupMenuButton<String>(
+                          tooltip: 'Más opciones',
+                          onSelected: (opcion) async {
+                            if (opcion == 'editar') {
+                              await mostrarFormularioColaboracion(
+                                context,
+                                ref,
+                                existente: colaboracion,
+                              );
+                            } else if (opcion == 'eliminar') {
+                              final confirmado = await confirmarEliminacion(
+                                context,
+                                titulo:
+                                    '¿Eliminar a ${colaboracion.nombreCliente}?',
+                              );
+                              if (confirmado) {
+                                await ref.read(eliminarColaboracionProvider)(
+                                  colaboracion.id,
+                                );
+                              }
+                            }
+                          },
+                          itemBuilder: (context) => const [
+                            PopupMenuItem(
+                              value: 'editar',
+                              child: ListTile(
+                                leading: Icon(Icons.edit_outlined),
+                                title: Text('Editar'),
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 'eliminar',
+                              child: ListTile(
+                                leading: Icon(Icons.delete_outline),
+                                title: Text('Eliminar'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(colaboracion.descripcion),
+                    if (tieneFecha) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_month_outlined,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.secondary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${colaboracion.fecha!.day.toString().padLeft(2, '0')}/'
+                            '${colaboracion.fecha!.month.toString().padLeft(2, '0')}/'
+                            '${colaboracion.fecha!.year}',
+                            style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
-                      Text(colaboracion.descripcion),
-                      if (tieneFecha) ...[
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_month_outlined,
-                              size: 16,
-                              color: Theme.of(context).colorScheme.secondary,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '${colaboracion.fecha!.day.toString().padLeft(2, '0')}/'
-                              '${colaboracion.fecha!.month.toString().padLeft(2, '0')}/'
-                              '${colaboracion.fecha!.year}',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
-                      ],
-                      if (tienePrecio) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          formatearPrecio(colaboracion.precio!),
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                      ],
-                      if (tieneNotas) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          colaboracion.notasCliente,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(fontStyle: FontStyle.italic),
-                        ),
-                      ],
-                      if (tieneInstagram) ...[
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            OutlinedButton.icon(
-                              onPressed: () => launchUrl(
-                                linkMensajeInstagram(
-                                  colaboracion.instagramCliente,
-                                ),
-                                mode: LaunchMode.externalApplication,
-                              ),
-                              icon: const Icon(Icons.chat_bubble_outline),
-                              label: const Text('Mensaje'),
-                            ),
-                            const SizedBox(width: 12),
-                            OutlinedButton.icon(
-                              onPressed: () => launchUrl(
-                                linkPerfilInstagram(
-                                  colaboracion.instagramCliente,
-                                ),
-                                mode: LaunchMode.externalApplication,
-                              ),
-                              icon: const Icon(Icons.open_in_new),
-                              label: const Text('Perfil'),
-                            ),
-                          ],
-                        ),
-                      ],
                     ],
-                  ),
+                    if (tienePrecio) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        formatearPrecio(colaboracion.precio!),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                    if (tieneNotas) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        colaboracion.notasCliente,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                    if (tieneInstagram) ...[
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: () => launchUrl(
+                              linkMensajeInstagram(
+                                colaboracion.instagramCliente,
+                              ),
+                              mode: LaunchMode.externalApplication,
+                            ),
+                            icon: const Icon(Icons.chat_bubble_outline),
+                            label: const Text('Mensaje'),
+                          ),
+                          const SizedBox(width: 12),
+                          OutlinedButton.icon(
+                            onPressed: () => launchUrl(
+                              linkPerfilInstagram(
+                                colaboracion.instagramCliente,
+                              ),
+                              mode: LaunchMode.externalApplication,
+                            ),
+                            icon: const Icon(Icons.open_in_new),
+                            label: const Text('Perfil'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
-              );
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Error: $error')),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => mostrarFormularioColaboracion(context, ref),
-        tooltip: 'Nueva colaboración',
-        child: const Icon(Icons.add),
-      ),
+              ),
+            );
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => Center(child: Text('Error: $error')),
     );
   }
 }

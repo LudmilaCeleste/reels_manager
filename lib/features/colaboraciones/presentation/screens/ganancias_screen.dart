@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/formatear_fecha.dart';
 import '../../../../core/utils/formatear_precio.dart';
+import '../../../abonos/domain/usecases/calcular_abonos.dart';
+import '../../../abonos/presentation/providers/abono_providers.dart';
 import '../../domain/entities/colaboracion.dart';
 import '../../domain/usecases/calcular_totales.dart';
 import '../providers/colaboracion_providers.dart';
@@ -25,6 +28,10 @@ class GananciasScreen extends ConsumerWidget {
       body: colaboracionesAsync.when(
         data: (colaboraciones) {
           final totales = calcularTotales(colaboraciones);
+          final totalesAbonos = calcularTotalesAbonos(
+            ref.watch(abonosStreamProvider).value ?? [],
+            DateTime.now(),
+          );
           final conPrecio =
               colaboraciones.where((c) => c.precio != null).toList()
                 ..sort((a, b) => b.precio!.compareTo(a.precio!));
@@ -32,6 +39,11 @@ class GananciasScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              Text(
+                'Colaboraciones puntuales',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 12),
               _TarjetaTotal(
                 titulo: 'Cobrado',
                 subtitulo: totales.cantidadCobrado == 0
@@ -49,6 +61,42 @@ class GananciasScreen extends ConsumerWidget {
                     ? 'No hay colaboraciones confirmadas sin pagar.'
                     : 'De ${totales.cantidadPendiente} colaboración${totales.cantidadPendiente == 1 ? '' : 'es'} confirmada${totales.cantidadPendiente == 1 ? '' : 's'} sin pagar.',
                 monto: totales.totalPendiente,
+                colorFondo: colorScheme.tertiaryContainer,
+                colorTexto: colorScheme.onTertiaryContainer,
+                icono: Icons.hourglass_bottom_outlined,
+              ),
+              const SizedBox(height: 28),
+              Text(
+                'Abonos mensuales · ${etiquetaMes(DateTime.now())}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 12),
+              _TarjetaTotal(
+                titulo: 'Abonos cobrados este mes',
+                subtitulo: totalesAbonos.cantidadActivos == 0
+                    ? 'Todavía no hay abonos mensuales activos.'
+                    : '${totalesAbonos.cantidadCobradosMes} de '
+                          '${totalesAbonos.cantidadActivos} '
+                          'abono${totalesAbonos.cantidadActivos == 1 ? '' : 's'} '
+                          'pagado${totalesAbonos.cantidadCobradosMes == 1 ? '' : 's'}. '
+                          'Si todos pagan entran '
+                          '${formatearPrecio(totalesAbonos.ingresoMensual)} por mes.',
+                monto: totalesAbonos.cobradoMes,
+                colorFondo: colorScheme.primary,
+                colorTexto: colorScheme.onPrimary,
+                icono: Icons.event_repeat_outlined,
+              ),
+              const SizedBox(height: 16),
+              _TarjetaTotal(
+                titulo: 'Abonos pendientes de cobro',
+                subtitulo: totalesAbonos.pendienteTotal == 0
+                    ? 'No hay abonos pendientes.'
+                    : 'Este mes faltan '
+                          '${formatearPrecio(totalesAbonos.pendienteMes)} '
+                          '(${totalesAbonos.cantidadPendientesMes} '
+                          'abono${totalesAbonos.cantidadPendientesMes == 1 ? '' : 's'})'
+                          '${totalesAbonos.pendienteAnterior > 0 ? ' y ${formatearPrecio(totalesAbonos.pendienteAnterior)} de meses anteriores' : ''}.',
+                monto: totalesAbonos.pendienteTotal,
                 colorFondo: colorScheme.tertiaryContainer,
                 colorTexto: colorScheme.onTertiaryContainer,
                 icono: Icons.hourglass_bottom_outlined,

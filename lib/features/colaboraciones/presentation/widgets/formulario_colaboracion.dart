@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/parsear_monto.dart';
 import '../../../reels/presentation/providers/reel_providers.dart';
 import '../../domain/entities/colaboracion.dart';
 import '../providers/colaboracion_providers.dart';
@@ -33,9 +34,11 @@ Future<void> mostrarFormularioColaboracion(
     text: existente?.descripcion ?? descripcionInicial,
   );
   final precioController = TextEditingController(
-    text: existente?.precio == null ? '' : existente!.precio!.toStringAsFixed(
-      existente.precio! % 1 == 0 ? 0 : 2,
-    ),
+    text: existente?.precio == null
+        ? ''
+        : existente!.precio!.toStringAsFixed(
+            existente.precio! % 1 == 0 ? 0 : 2,
+          ),
   );
   final reels = ref.read(reelsStreamProvider).value ?? [];
   final esEdicion = existente != null;
@@ -97,8 +100,7 @@ Future<void> mostrarFormularioColaboracion(
                   ),
                   validator: (valor) {
                     if (valor == null || valor.trim().isEmpty) return null;
-                    final normalizado = valor.trim().replaceAll(',', '.');
-                    final numero = double.tryParse(normalizado);
+                    final numero = parsearMonto(valor);
                     if (numero == null || numero < 0) {
                       return 'Poné un número válido';
                     }
@@ -198,13 +200,9 @@ Future<void> mostrarFormularioColaboracion(
           FilledButton(
             onPressed: () async {
               if (!(formKey.currentState?.validate() ?? false)) return;
-              final textoPrecio = precioController.text.trim().replaceAll(
-                ',',
-                '.',
-              );
-              final precio = textoPrecio.isEmpty
+              final precio = precioController.text.trim().isEmpty
                   ? null
-                  : double.tryParse(textoPrecio);
+                  : parsearMonto(precioController.text);
               if (esEdicion) {
                 await ref.read(actualizarColaboracionProvider)(
                   id: existente.id,
