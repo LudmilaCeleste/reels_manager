@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'core/config/nombre_app.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/auth_gate.dart';
 import 'firebase_options.dart';
@@ -20,7 +21,7 @@ class ReelsManagerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Gestor de Reels',
+      title: nombreApp,
       debugShowCheckedModeBanner: false,
       theme: appTheme,
       darkTheme: appThemeOscuro,

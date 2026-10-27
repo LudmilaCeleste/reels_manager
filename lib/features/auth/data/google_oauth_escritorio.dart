@@ -6,6 +6,8 @@ import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/config/nombre_app.dart';
+
 /// Client ID del cliente OAuth de tipo "Aplicación de escritorio" creado
 /// en Google Cloud Console (mismo proyecto que el de Firebase).
 ///
@@ -164,8 +166,7 @@ class GoogleOauthEscritorio {
       payload += '=' * ((4 - payload.length % 4) % 4);
       final decodificado = utf8.decode(base64Url.decode(payload));
       final datos = jsonDecode(decodificado) as Map<String, dynamic>;
-      final nombre =
-          datos['given_name'] as String? ?? datos['name'] as String?;
+      final nombre = datos['given_name'] as String? ?? datos['name'] as String?;
       return (nombre == null || nombre.trim().isEmpty) ? null : nombre.trim();
     } catch (_) {
       return null;
@@ -214,7 +215,7 @@ String _paginaExito(String? nombre) {
         'stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
     titulo: saludo,
     mensaje:
-        'Iniciaste sesión en <strong>Gestor de Reels</strong>. '
+        'Iniciaste sesión en <strong>${_escaparHtml(nombreApp)}</strong>. '
         'Ya podés volver a la app.',
     piePagina: 'Podés cerrar esta pestaña.',
     cerrarSola: true,
@@ -254,7 +255,7 @@ String _paginaHtml({
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gestor de Reels</title>
+<title>${_escaparHtml(nombreApp)}</title>
 <style>
   * { box-sizing: border-box; }
   html, body {

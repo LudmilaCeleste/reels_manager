@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../config/nombre_app.dart';
 import '../theme/app_theme.dart';
 
 class PantallaLogin extends ConsumerStatefulWidget {
@@ -38,10 +39,7 @@ class _PantallaLoginState extends ConsumerState<PantallaLogin> {
           child: Card(
             margin: const EdgeInsets.all(28),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 36,
-                vertical: 48,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 48),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -69,8 +67,9 @@ class _PantallaLoginState extends ConsumerState<PantallaLogin> {
                   ),
                   const SizedBox(height: 28),
                   Text(
-                    'Gestor de Reels',
+                    nombreApp,
                     style: Theme.of(context).textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 10),
                   Text(

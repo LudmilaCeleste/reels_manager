@@ -1,5 +1,5 @@
 name: reels_manager
-description: "App para guardar y organizar reels de Instagram: clientes, ejemplos y colaboraciones, con reproduccion del video desde el link."
+description: "AceMedia Marketing: app interna de la agencia para organizar reels, colaboraciones, abonos mensuales, tareas, calendario y consultas de clientes."
 publish_to: 'none'
 
 version: 0.10.1+1
