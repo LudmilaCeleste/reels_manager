@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { LayoutGrid, LogOut } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { nombreApp, esDemo } from '../config'
@@ -10,21 +10,23 @@ import { Badge } from '../ui/Badge'
 import { IconButton } from '../ui/Button'
 import { Logo } from '../ui/Logo'
 import { Modal } from '../ui/Modal'
-import { Avatar } from '../ui/Pieces'
+import { Avatar, ListaCargando } from '../ui/Pieces'
 import { BannerRecordatorios } from '../features/tareas/BannerRecordatorios'
-import { CalendarioPage } from '../features/calendario/CalendarioPage'
-import { ColaboracionesPage } from '../features/colaboraciones/ColaboracionesPage'
-import { ConsultasPage } from '../features/consultas/ConsultasPage'
-import { CuentaPage } from '../features/cuenta/CuentaPage'
-import { CuentasPage } from '../features/cuentas/CuentasPage'
-import { GananciasPage } from '../features/ganancias/GananciasPage'
-import { NotasPage } from '../features/notas/NotasPage'
-import { PropuestasPage } from '../features/propuestas/PropuestasPage'
-import { ReelsPage } from '../features/reels/ReelsPage'
-import { TareasPage } from '../features/tareas/TareasPage'
 import { useConsultasNuevas, useHoy, useRecordatoriosDeHoy, useTareasUrgentes } from './hooks'
 import { rutasPrincipalesMovil, secciones, type ItemNav } from './nav'
 import { ThemeToggle } from './ThemeToggle'
+
+// Cada sección se descarga recién cuando se entra por primera vez, así la app abre más rápido.
+const CalendarioPage = lazy(() => import('../features/calendario/CalendarioPage').then((m) => ({ default: m.CalendarioPage })))
+const ColaboracionesPage = lazy(() => import('../features/colaboraciones/ColaboracionesPage').then((m) => ({ default: m.ColaboracionesPage })))
+const ConsultasPage = lazy(() => import('../features/consultas/ConsultasPage').then((m) => ({ default: m.ConsultasPage })))
+const CuentaPage = lazy(() => import('../features/cuenta/CuentaPage').then((m) => ({ default: m.CuentaPage })))
+const CuentasPage = lazy(() => import('../features/cuentas/CuentasPage').then((m) => ({ default: m.CuentasPage })))
+const GananciasPage = lazy(() => import('../features/ganancias/GananciasPage').then((m) => ({ default: m.GananciasPage })))
+const NotasPage = lazy(() => import('../features/notas/NotasPage').then((m) => ({ default: m.NotasPage })))
+const PropuestasPage = lazy(() => import('../features/propuestas/PropuestasPage').then((m) => ({ default: m.PropuestasPage })))
+const ReelsPage = lazy(() => import('../features/reels/ReelsPage').then((m) => ({ default: m.ReelsPage })))
+const TareasPage = lazy(() => import('../features/tareas/TareasPage').then((m) => ({ default: m.TareasPage })))
 
 export function Shell() {
   const location = useLocation()
@@ -115,19 +117,21 @@ export function Shell() {
             </AnimatePresence>
 
             <motion.div key={location.pathname} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, ease: 'easeOut' }}>
-              <Routes location={location}>
-                <Route path="/reels" element={<ReelsPage />} />
-                <Route path="/colaboraciones" element={<ColaboracionesPage />} />
-                <Route path="/ganancias" element={<GananciasPage />} />
-                <Route path="/tareas" element={<TareasPage />} />
-                <Route path="/calendario" element={<CalendarioPage />} />
-                <Route path="/cuentas" element={<CuentasPage />} />
-                <Route path="/propuestas" element={<PropuestasPage />} />
-                <Route path="/consultas" element={<ConsultasPage />} />
-                <Route path="/notas" element={<NotasPage />} />
-                <Route path="/cuenta" element={<CuentaPage />} />
-                <Route path="*" element={<Navigate to="/reels" replace />} />
-              </Routes>
+              <Suspense fallback={<ListaCargando />}>
+                <Routes location={location}>
+                  <Route path="/reels" element={<ReelsPage />} />
+                  <Route path="/colaboraciones" element={<ColaboracionesPage />} />
+                  <Route path="/ganancias" element={<GananciasPage />} />
+                  <Route path="/tareas" element={<TareasPage />} />
+                  <Route path="/calendario" element={<CalendarioPage />} />
+                  <Route path="/cuentas" element={<CuentasPage />} />
+                  <Route path="/propuestas" element={<PropuestasPage />} />
+                  <Route path="/consultas" element={<ConsultasPage />} />
+                  <Route path="/notas" element={<NotasPage />} />
+                  <Route path="/cuenta" element={<CuentaPage />} />
+                  <Route path="*" element={<Navigate to="/reels" replace />} />
+                </Routes>
+              </Suspense>
             </motion.div>
           </div>
         </main>

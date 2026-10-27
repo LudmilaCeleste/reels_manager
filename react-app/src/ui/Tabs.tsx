@@ -20,7 +20,13 @@ interface Props<T extends string> {
 export function Tabs<T extends string>({ pestanas, valor, onChange, className }: Props<T>) {
   const id = useId()
   return (
-    <div role="tablist" className={cn('inline-flex max-w-full gap-1 overflow-x-auto rounded-2xl border border-line bg-surface p-1 shadow-soft', className)}>
+    <div
+      role="tablist"
+      className={cn(
+        'inline-flex max-w-full gap-1 overflow-x-auto rounded-2xl border border-line bg-surface p-1 shadow-soft [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+        className,
+      )}
+    >
       {pestanas.map((p) => {
         const activa = p.valor === valor
         return (
@@ -29,9 +35,12 @@ export function Tabs<T extends string>({ pestanas, valor, onChange, className }:
             type="button"
             role="tab"
             aria-selected={activa}
-            onClick={() => onChange(p.valor)}
+            onClick={(e) => {
+              onChange(p.valor)
+              e.currentTarget.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' })
+            }}
             className={cn(
-              'relative flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors',
+              'relative flex shrink-0 items-center gap-2 rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-colors sm:px-4 sm:text-sm',
               activa ? 'text-brand-800 dark:text-brand-100' : 'text-muted hover:text-ink',
             )}
           >
@@ -42,8 +51,8 @@ export function Tabs<T extends string>({ pestanas, valor, onChange, className }:
                 className="absolute inset-0 rounded-xl bg-brand-500/14 ring-1 ring-inset ring-brand-500/25"
               />
             )}
-            <span className="relative flex items-center gap-2 [&_svg]:size-4">
-              {p.icono}
+            <span className="relative flex items-center gap-1.5 sm:gap-2 [&_svg]:size-4">
+              {p.icono && <span className="hidden sm:contents">{p.icono}</span>}
               {p.etiqueta}
               {p.cantidad !== undefined && (
                 <span
