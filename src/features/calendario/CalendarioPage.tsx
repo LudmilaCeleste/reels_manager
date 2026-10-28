@@ -3,13 +3,14 @@ import { es } from 'date-fns/locale'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CalendarDays, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useColaboraciones, useEventos } from '../../data/useData'
-import type { EventoCalendario } from '../../domain/types'
+import { useAbonos, useColaboraciones, useEventos } from '../../data/useData'
+import { etiquetaTipoEvento, tipoDeEvento, tiposEvento } from '../../domain/eventos'
+import type { EventoCalendario, TipoEvento } from '../../domain/types'
 import { cn } from '../../lib/cn'
 import { aInputFecha, capitalizar, desdeInputFecha, fechaLarga } from '../../lib/dates'
 import { eliminarEvento, guardarEvento } from '../../services/calendario'
-import { Badge } from '../../ui/Badge'
 import { Button, IconButton } from '../../ui/Button'
+import { estilosEvento as estilos } from '../../ui/estilosEvento'
 import { Card } from '../../ui/Card'
 import { useConfirmar } from '../../ui/Confirm'
 import { Campo, Input, Select, Textarea } from '../../ui/Fields'
@@ -20,15 +21,7 @@ import { PageHeader, PrimaryAction } from '../../ui/Pieces'
 import { useToast } from '../../ui/Toast'
 import { useDialogo, type Dialogo } from '../../ui/useDialogo'
 
-type TipoEvento = 'tarea' | 'colaboracion' | 'evento'
-
-const tipoDe = (e: EventoCalendario): TipoEvento => (e.id.startsWith('tarea-') ? 'tarea' : e.id.startsWith('colaboracion-') || e.colaboracionId ? 'colaboracion' : 'evento')
-
-const estilos: Record<TipoEvento, { pastilla: string; barra: string; etiqueta: string; tono: 'marca' | 'violeta' | 'aviso' }> = {
-  tarea: { pastilla: 'bg-brand-500/16 text-brand-800 dark:text-brand-100', barra: 'bg-brand-500', etiqueta: 'Tarea', tono: 'marca' },
-  colaboracion: { pastilla: 'bg-violet-500/16 text-violet-800 dark:text-violet-100', barra: 'bg-violet-500', etiqueta: 'Colaboración', tono: 'violeta' },
-  evento: { pastilla: 'bg-amber-500/18 text-amber-800 dark:text-amber-100', barra: 'bg-amber-500', etiqueta: 'Evento', tono: 'aviso' },
-}
+const tipoDe = tipoDeEvento
 
 const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
@@ -185,10 +178,10 @@ export function CalendarioPage() {
           </AnimatePresence>
 
           <div className="flex flex-wrap gap-4 px-5 py-3 text-xs font-medium text-muted">
-            {(Object.keys(estilos) as TipoEvento[]).map((t) => (
+            {tiposEvento.map((t) => (
               <span key={t} className="flex items-center gap-1.5">
                 <span className={cn('size-2.5 rounded-full', estilos[t].barra)} />
-                {estilos[t].etiqueta === 'Evento' ? 'Evento suelto' : estilos[t].etiqueta === 'Tarea' ? 'Tareas' : 'Colaboraciones'}
+                {estilos[t].plural}
               </span>
             ))}
           </div>
@@ -272,9 +265,7 @@ function PanelDia({ fecha, eventos, onNuevo, onEditar, sinMarco }: PropsPanel) {
               >
                 <span className={cn('absolute inset-y-0 left-0 w-1.5', estilo.barra)} />
                 <div className="min-w-0 flex-1">
-                  <Badge tono={estilo.tono} className="mb-1.5">
-                    {estilo.etiqueta}
-                  </Badge>
+                  <span className={cn('mb-1.5 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-none', estilo.insignia)}>{etiquetaTipoEvento[tipoDe(e)]}</span>
                   <p className="text-sm font-bold leading-snug text-ink">{e.titulo}</p>
                   {e.descripcion && <p className="mt-0.5 text-[13px] text-muted">{e.descripcion}</p>}
                 </div>
@@ -307,36 +298,111 @@ function EventoForm({ dialogo }: { dialogo: Dialogo<{ evento?: EventoCalendario;
 function Formulario({ dialogo }: { dialogo: Dialogo<{ evento?: EventoCalendario; fecha: Date }> }) {
   const { evento, fecha: fechaInicial } = dialogo.valor ?? { fecha: new Date() }
   const { datos: colaboraciones } = useColaboraciones()
+  const { datos: abonos } = useAbonos()
   const [titulo, setTitulo] = useState(evento?.titulo ?? '')
   const [descripcion, setDescripcion] = useState(evento?.descripcion ?? '')
   const [fecha, setFecha] = useState(aInputFecha(fechaInicial))
+  const [tipo, setTipo] = useState<TipoEvento>(evento ? tipoDeEvento(evento) : 'evento')
   const [colaboracionId, setColaboracionId] = useState(evento?.colaboracionId ?? '')
+  const [abonoId, setAbonoId] = useState(evento?.abonoId ?? '')
+
+  /** Al elegir un cliente, si todavía no hay título se usa su nombre. */
+  const sugerirTitulo = (nombre: string | undefined) => {
+    if (nombre && titulo.trim() === '') setTitulo(nombre)
+  }
 
   return (
     <FormModal
       open={dialogo.abierto}
       onClose={dialogo.cerrar}
       titulo={evento ? 'Editar evento' : 'Nuevo evento'}
+      descripcion="Elegí qué tipo es: cada tipo tiene su color en el calendario."
       etiquetaGuardar={evento ? 'Actualizar' : 'Guardar'}
       mensajeExito={evento ? 'Evento actualizado' : 'Evento agregado'}
       onSubmit={() =>
-        guardarEvento({ titulo, descripcion, fecha: desdeInputFecha(fecha) ?? fechaInicial, colaboracionId: colaboracionId === '' ? null : colaboracionId }, evento)
+        guardarEvento(
+          {
+            titulo,
+            descripcion,
+            fecha: desdeInputFecha(fecha) ?? fechaInicial,
+            tipo,
+            colaboracionId: colaboracionId === '' ? null : colaboracionId,
+            abonoId: abonoId === '' ? null : abonoId,
+          },
+          evento,
+        )
       }
     >
+      <div>
+        <p id="tipo-evento" className="mb-1.5 text-[13px] font-semibold text-ink">
+          Tipo
+        </p>
+        <div role="radiogroup" aria-labelledby="tipo-evento" className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {tiposEvento.map((t) => {
+            const activo = t === tipo
+            return (
+              <motion.button
+                key={t}
+                type="button"
+                role="radio"
+                aria-checked={activo}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setTipo(t)}
+                className={cn(
+                  'flex h-10 items-center gap-2 rounded-xl border px-3 text-[13px] font-semibold transition-colors',
+                  activo ? cn(estilos[t].ficha, 'shadow-sm') : 'border-line bg-surface text-muted hover:text-ink',
+                )}
+              >
+                <span className={cn('size-2.5 shrink-0 rounded-full', activo ? 'bg-white' : estilos[t].barra)} />
+                <span className="truncate">{etiquetaTipoEvento[t]}</span>
+              </motion.button>
+            )
+          })}
+        </div>
+      </div>
+
       <Campo etiqueta="Título">{(id) => <Input id={id} value={titulo} onChange={(e) => setTitulo(e.target.value)} autoFocus />}</Campo>
       <Campo etiqueta="Descripción" opcional>
         {(id) => <Textarea id={id} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={2} className="min-h-[4.5rem]" />}
       </Campo>
       <div className="grid gap-4 sm:grid-cols-2">
         <Campo etiqueta="Fecha">{(id) => <Input id={id} type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />}</Campo>
-        {(colaboraciones?.length ?? 0) > 0 && (
-          <Campo etiqueta="Cliente" opcional>
+        {tipo === 'colaboracion' && (colaboraciones?.length ?? 0) > 0 && (
+          <Campo etiqueta="Colaboración" opcional>
             {(id) => (
-              <Select id={id} value={colaboracionId} onChange={(e) => setColaboracionId(e.target.value)}>
-                <option value="">Ninguno</option>
+              <Select
+                id={id}
+                value={colaboracionId}
+                onChange={(e) => {
+                  setColaboracionId(e.target.value)
+                  sugerirTitulo(colaboraciones?.find((c) => c.id === e.target.value)?.nombreCliente)
+                }}
+              >
+                <option value="">Ninguna</option>
                 {colaboraciones?.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.nombreCliente}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Campo>
+        )}
+        {tipo === 'abono' && (abonos?.length ?? 0) > 0 && (
+          <Campo etiqueta="Abono" opcional>
+            {(id) => (
+              <Select
+                id={id}
+                value={abonoId}
+                onChange={(e) => {
+                  setAbonoId(e.target.value)
+                  sugerirTitulo(abonos?.find((a) => a.id === e.target.value)?.nombreCliente)
+                }}
+              >
+                <option value="">Ninguno</option>
+                {abonos?.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.nombreCliente}
                   </option>
                 ))}
               </Select>

@@ -5,6 +5,7 @@ import { MemoryBackend } from '../data/memoryBackend'
 import { idTareaGenerada } from '../domain/tareas'
 import { ErrorDeValidacion, type CuentaInstagram, type ReglaTarea } from '../domain/types'
 import { eliminarColaboracion, guardarColaboracion } from './colaboraciones'
+import { guardarEvento } from './calendario'
 import { guardarCuenta } from './cuentas'
 import { cambiarHechaTarea, eliminarTareasHechas, generarTareasRecurrentes, guardarRegla, guardarTarea } from './tareas'
 
@@ -198,5 +199,25 @@ describe('cuentas de Instagram', () => {
 
   it('rechaza un usuario vacío', async () => {
     await expect(guardarCuenta({ usuario: '  ', notas: '', propuestaId: null }, [])).rejects.toBeInstanceOf(ErrorDeValidacion)
+  })
+})
+
+describe('eventos del calendario', () => {
+  const base = { titulo: 'Cobro', descripcion: '', fecha: new Date(2026, 10, 5), colaboracionId: 'c1', abonoId: 'a1' }
+
+  it('guarda el tipo elegido y solo el cliente que corresponde a ese tipo', async () => {
+    await guardarEvento({ ...base, tipo: 'abono' })
+    await guardarEvento({ ...base, tipo: 'colaboracion', titulo: 'Reel' })
+    await guardarEvento({ ...base, tipo: 'reunion', titulo: 'Reunión' })
+
+    const lista = await eventos()
+    const por = (t: string) => lista.find((e) => e.titulo === t)
+    expect(por('Cobro')).toMatchObject({ tipo: 'abono', abonoId: 'a1', colaboracionId: null })
+    expect(por('Reel')).toMatchObject({ tipo: 'colaboracion', colaboracionId: 'c1', abonoId: null })
+    expect(por('Reunión')).toMatchObject({ tipo: 'reunion', colaboracionId: null, abonoId: null })
+  })
+
+  it('pide un título', async () => {
+    await expect(guardarEvento({ ...base, titulo: '  ', tipo: 'evento' })).rejects.toBeInstanceOf(ErrorDeValidacion)
   })
 })

@@ -91,7 +91,9 @@ function TarjetaAbono({ abono, onEditar, onHistorial }: { abono: Abono; onEditar
   }
 
   return (
-    <Card className={abono.activo ? 'p-5' : 'p-5 opacity-70'}>
+    <Card className={abono.activo ? 'relative overflow-hidden p-5' : 'relative overflow-hidden p-5 opacity-70'}>
+      {/* Los abonos mensuales tienen su propio color (celeste) en toda la app. */}
+      <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400 to-sky-600" />
       <div className="flex items-start gap-3.5">
         <Avatar texto={abono.nombreCliente} className="size-11" />
         <div className="min-w-0 flex-1">
@@ -112,7 +114,7 @@ function TarjetaAbono({ abono, onEditar, onHistorial }: { abono: Abono; onEditar
       </div>
 
       <div className="mt-4 flex items-baseline gap-2">
-        <span className="text-2xl font-extrabold tracking-tight text-brand-600 dark:text-brand-300">{formatearPrecio(abono.montoMensual)}</span>
+        <span className="text-2xl font-extrabold tracking-tight text-sky-600 dark:text-sky-300">{formatearPrecio(abono.montoMensual)}</span>
         <span className="text-sm font-medium text-muted">por mes</span>
       </div>
       <p className="mt-1 flex items-center gap-1.5 text-xs text-faint">

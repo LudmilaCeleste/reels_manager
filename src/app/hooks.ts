@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useConsultas, useReglas, useTareas } from '../data/useData'
+import { useConsultas, useEventos, useReglas, useTareas } from '../data/useData'
+import { avisosDelCalendario } from '../domain/eventos'
 import { recordatoriosDeHoy, esUrgente } from '../domain/tareas'
 
 /** El día de hoy (sin hora). Cambia solo al pasar la medianoche, aunque la app quede abierta. */
@@ -33,6 +34,13 @@ export function useTareasUrgentes(): number {
 export function useConsultasNuevas(): number {
   const { datos } = useConsultas()
   return useMemo(() => (datos ?? []).filter((c) => c.estado === 'nueva').length, [datos])
+}
+
+/** Lo del calendario que pasa hoy o mañana (el aviso de un día antes y del mismo día). */
+export function useAvisosDelCalendario() {
+  const { datos } = useEventos()
+  const hoy = useHoy()
+  return useMemo(() => avisosDelCalendario(datos ?? [], hoy), [datos, hoy])
 }
 
 /** Los avisos de hoy: qué reglas automáticas toca recordar y cuánto falta de cada una. */

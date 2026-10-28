@@ -13,7 +13,9 @@ import type {
   ReglaTarea,
   Reel,
   Tarea,
+  TipoEvento,
 } from '../domain/types'
+import { tiposEvento } from '../domain/eventos'
 import type { Datos, Doc } from './backend'
 
 /** Nombres de las colecciones de Firestore (los mismos que usa la app de escritorio). */
@@ -67,6 +69,8 @@ export const aEvento = ({ id, data: d }: Doc): EventoCalendario => ({
   fecha: fecha(d.fecha) ?? new Date(),
   descripcion: texto(d.descripcion),
   colaboracionId: textoONulo(d.colaboracionId),
+  tipo: tiposEvento.includes(d.tipo as TipoEvento) ? (d.tipo as TipoEvento) : null,
+  abonoId: textoONulo(d.abonoId),
 })
 export const deEvento = (e: Omit<EventoCalendario, 'id'>): Datos => ({ ...e })
 

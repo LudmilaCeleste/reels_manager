@@ -24,6 +24,8 @@ export async function sincronizarEventoDeTarea(tarea: Tarea): Promise<void> {
     fecha: tarea.fechaLimite,
     descripcion: [tarea.cliente, tarea.descripcion].filter((t) => t !== '').join(' · '),
     colaboracionId: null,
+    tipo: 'tarea',
+    abonoId: null,
   })
 }
 

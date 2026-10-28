@@ -95,5 +95,13 @@ src/
 - Cada sección se descarga recién cuando se entra, y Firebase, React y las animaciones van
   en archivos separados para que el navegador los guarde.
 - Los datos se actualizan solos en tiempo real, sin botón de refrescar.
-- Los recordatorios de lunes, miércoles y viernes son **dentro de la app** (aviso arriba).
-  Si la pestaña está cerrada no avisa.
+- Los recordatorios son **dentro de la app** (aviso arriba) y, si la pestaña está cerrada,
+  no avisan. Muestran los días elegidos de las tareas automáticas (por ejemplo lunes,
+  miércoles y viernes) y **todo lo del calendario que pasa mañana y hoy**: un día antes y el
+  mismo día. Cerrar el aviso lo oculta por hoy; si aparece algo nuevo, vuelve a mostrarse.
+- Cada evento del calendario tiene un **tipo** con su color: colaboración, abono mensual,
+  tarea, reunión, grabación u otro. Los abonos mensuales usan el celeste también en su
+  lista y en Ganancias.
+- **Actualización con un clic**: cada publicación deja un `version.json`. La app lo consulta
+  al abrir, cada 5 minutos y al volver a la pestaña; si hay una versión nueva muestra
+  "Actualizar ahora", que recarga y deja la última versión sin perder nada.

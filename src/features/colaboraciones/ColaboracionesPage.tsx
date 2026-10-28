@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion'
-import { CalendarDays, CheckCircle2, Handshake, MessageCircle, Pencil, Send, Trash2, UserRound } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Handshake, MessageCircle, Pencil, Repeat, Send, Trash2, UserRound } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useColaboraciones } from '../../data/useData'
 import { etiquetaEstado } from '../../domain/colaboraciones'
@@ -59,7 +59,7 @@ export function ColaboracionesPage() {
         onChange={setVista}
         pestanas={[
           { valor: 'puntuales', etiqueta: 'Puntuales' },
-          { valor: 'mensuales', etiqueta: 'Mensuales (abonos)' },
+          { valor: 'mensuales', etiqueta: 'Mensuales (abonos)', icono: <Repeat className="text-sky-500" /> },
         ]}
       />
 

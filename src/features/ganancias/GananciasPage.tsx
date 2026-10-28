@@ -79,10 +79,10 @@ export function GananciasPage() {
         )}
       </Seccion>
 
-      <Seccion titulo={`Abonos mensuales · ${etiquetaMes(new Date())}`} icono={<Repeat className="size-4" />}>
+      <Seccion titulo={`Abonos mensuales · ${etiquetaMes(new Date())}`} icono={<Repeat className="size-4 text-sky-500" />}>
         <div className="grid gap-4 md:grid-cols-2">
           <Tarjeta
-            tono="marca"
+            tono="abono"
             icono={<Repeat />}
             titulo="Abonos cobrados este mes"
             monto={totalesAbonos.cobradoMes}
@@ -93,7 +93,7 @@ export function GananciasPage() {
             }
           />
           <Tarjeta
-            tono="aviso"
+            tono="abonoPendiente"
             icono={<Clock />}
             titulo="Abonos pendientes de cobro"
             monto={totalesAbonos.pendienteTotal}
@@ -155,26 +155,53 @@ function Seccion({ titulo, icono, children }: { titulo: string; icono: ReactNode
   )
 }
 
-function Tarjeta({ tono, icono, titulo, monto, detalle }: { tono: 'marca' | 'aviso'; icono: ReactNode; titulo: string; monto: number; detalle: string }) {
-  const marca = tono === 'marca'
+type TonoTarjeta = 'marca' | 'aviso' | 'abono' | 'abonoPendiente'
+
+/** Los abonos mensuales tienen su propio color (celeste) para distinguirlos de las colaboraciones puntuales. */
+const tonosTarjeta: Record<TonoTarjeta, { caja: string; brillo: string; icono: string; titulo: string; detalle: string }> = {
+  marca: {
+    caja: 'bg-gradient-to-br from-brand-400 via-brand-500 to-brand-700 text-white',
+    brillo: 'bg-white/20',
+    icono: 'bg-white/20',
+    titulo: 'text-white/90',
+    detalle: 'text-white/80',
+  },
+  aviso: {
+    caja: 'border border-amber-500/30 bg-gradient-to-br from-amber-400/20 via-amber-500/10 to-surface text-ink',
+    brillo: 'bg-amber-400/30',
+    icono: 'bg-amber-500/20 text-amber-700 dark:text-amber-300',
+    titulo: 'text-ink',
+    detalle: 'text-muted',
+  },
+  abono: {
+    caja: 'bg-gradient-to-br from-sky-400 via-sky-500 to-sky-700 text-white',
+    brillo: 'bg-white/20',
+    icono: 'bg-white/20',
+    titulo: 'text-white/90',
+    detalle: 'text-white/80',
+  },
+  abonoPendiente: {
+    caja: 'border border-sky-500/30 bg-gradient-to-br from-sky-400/20 via-sky-500/10 to-surface text-ink',
+    brillo: 'bg-sky-400/30',
+    icono: 'bg-sky-500/20 text-sky-700 dark:text-sky-300',
+    titulo: 'text-ink',
+    detalle: 'text-muted',
+  },
+}
+
+function Tarjeta({ tono, icono, titulo, monto, detalle }: { tono: TonoTarjeta; icono: ReactNode; titulo: string; monto: number; detalle: string }) {
+  const t = tonosTarjeta[tono]
   return (
-    <motion.div
-      whileHover={{ y: -3 }}
-      transition={{ type: 'spring', stiffness: 380, damping: 26 }}
-      className={cn(
-        'relative overflow-hidden rounded-3xl p-6 shadow-lift',
-        marca ? 'bg-gradient-to-br from-brand-400 via-brand-500 to-brand-700 text-white' : 'border border-amber-500/30 bg-gradient-to-br from-amber-400/20 via-amber-500/10 to-surface text-ink',
-      )}
-    >
-      <div className={cn('absolute -right-8 -top-8 size-36 rounded-full blur-2xl', marca ? 'bg-white/20' : 'bg-amber-400/30')} />
+    <motion.div whileHover={{ y: -3 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }} className={cn('relative overflow-hidden rounded-3xl p-6 shadow-lift', t.caja)}>
+      <div className={cn('absolute -right-8 -top-8 size-36 rounded-full blur-2xl', t.brillo)} />
       <div className="relative flex items-center gap-3">
-        <div className={cn('grid size-10 place-items-center rounded-xl [&_svg]:size-5', marca ? 'bg-white/20' : 'bg-amber-500/20 text-amber-700 dark:text-amber-300')}>{icono}</div>
-        <p className={cn('text-sm font-bold', marca ? 'text-white/90' : 'text-ink')}>{titulo}</p>
+        <div className={cn('grid size-10 place-items-center rounded-xl [&_svg]:size-5', t.icono)}>{icono}</div>
+        <p className={cn('text-sm font-bold', t.titulo)}>{titulo}</p>
       </div>
       <p className="relative mt-4 text-4xl font-extrabold tracking-tight">
         <PrecioAnimado valor={monto} />
       </p>
-      <p className={cn('relative mt-2 text-[13px] leading-relaxed', marca ? 'text-white/80' : 'text-muted')}>{detalle}</p>
+      <p className={cn('relative mt-2 text-[13px] leading-relaxed', t.detalle)}>{detalle}</p>
     </motion.div>
   )
 }

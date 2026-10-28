@@ -1,9 +1,22 @@
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vitest/config'
+import { defineConfig, type Plugin } from 'vitest/config'
+
+// Identifica cada compilación. La app lo lleva adentro y también queda en
+// `version.json`: cuando el de la web publicada es distinto, avisa que hay
+// una versión nueva (ver src/app/AvisoActualizacion.tsx).
+const idDeCompilacion = Date.now().toString(36)
+
+const archivoDeVersion: Plugin = {
+  name: 'archivo-de-version',
+  generateBundle() {
+    this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ id: idDeCompilacion }) })
+  },
+}
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), archivoDeVersion],
+  define: { __BUILD_ID__: JSON.stringify(idDeCompilacion) },
   server: { port: 5173, host: 'localhost' },
   build: {
     // Firebase (Auth + Firestore en tiempo real) pesa ~550 kB y no se puede achicar más.

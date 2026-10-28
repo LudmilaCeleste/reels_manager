@@ -22,12 +22,18 @@ export interface Reel {
   colaboracionId: string | null
 }
 
+/** Qué clase de cosa es un evento del calendario (define su color). */
+export type TipoEvento = 'evento' | 'colaboracion' | 'abono' | 'tarea' | 'reunion' | 'grabacion'
+
 export interface EventoCalendario {
   id: string
   titulo: string
   fecha: Date
   descripcion: string
   colaboracionId: string | null
+  /** Los eventos viejos no lo tienen: en ese caso se deduce del id (ver `tipoDeEvento`). */
+  tipo: TipoEvento | null
+  abonoId: string | null
 }
 
 export interface Abono {

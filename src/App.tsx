@@ -1,5 +1,6 @@
 import { MotionConfig } from 'framer-motion'
 import { HashRouter } from 'react-router-dom'
+import { AvisoActualizacion } from './app/AvisoActualizacion'
 import { Shell } from './app/Shell'
 import { AuthProvider, useAuth } from './auth/AuthProvider'
 import { LoginScreen } from './auth/LoginScreen'
@@ -39,6 +40,7 @@ export default function App() {
               <HashRouter>
                 <Puerta />
               </HashRouter>
+              <AvisoActualizacion />
             </AuthProvider>
           </ConfirmProvider>
         </ToastProvider>

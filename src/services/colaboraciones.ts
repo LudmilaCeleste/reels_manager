@@ -31,7 +31,7 @@ export const idEventoDeColaboracion = (id: string) => `colaboracion-${id}`
 async function sincronizarEvento(c: Colaboracion): Promise<void> {
   const id = idEventoDeColaboracion(c.id)
   if (!c.fecha) return eliminarEvento(id)
-  await guardarEventoConId(id, { titulo: c.nombreCliente, fecha: c.fecha, descripcion: c.descripcion, colaboracionId: c.id })
+  await guardarEventoConId(id, { titulo: c.nombreCliente, fecha: c.fecha, descripcion: c.descripcion, colaboracionId: c.id, tipo: 'colaboracion', abonoId: null })
 }
 
 export async function guardarColaboracion(datos: DatosColaboracion, existente?: Colaboracion): Promise<Colaboracion> {

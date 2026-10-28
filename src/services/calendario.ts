@@ -1,13 +1,17 @@
 import { backend } from '../data/backend'
 import { COLECCION, deEvento } from '../data/mappers'
-import { ErrorDeValidacion, type EventoCalendario } from '../domain/types'
+import { ErrorDeValidacion, type EventoCalendario, type TipoEvento } from '../domain/types'
 import { nuevoId } from '../lib/ids'
 
 export interface DatosEvento {
   titulo: string
   descripcion: string
   fecha: Date
+  tipo: TipoEvento
+  /** Solo se guarda si el tipo es "colaboracion". */
   colaboracionId: string | null
+  /** Solo se guarda si el tipo es "abono". */
+  abonoId: string | null
 }
 
 const soloFecha = (f: Date) => new Date(f.getFullYear(), f.getMonth(), f.getDate())
@@ -22,7 +26,9 @@ export async function guardarEvento(datos: DatosEvento, existente?: EventoCalend
       titulo: datos.titulo.trim(),
       descripcion: datos.descripcion.trim(),
       fecha: soloFecha(datos.fecha),
-      colaboracionId: datos.colaboracionId,
+      tipo: datos.tipo,
+      colaboracionId: datos.tipo === 'colaboracion' ? datos.colaboracionId : null,
+      abonoId: datos.tipo === 'abono' ? datos.abonoId : null,
     }),
   )
 }

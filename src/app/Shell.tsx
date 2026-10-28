@@ -12,7 +12,7 @@ import { Logo } from '../ui/Logo'
 import { Modal } from '../ui/Modal'
 import { Avatar, ListaCargando } from '../ui/Pieces'
 import { BannerRecordatorios } from '../features/tareas/BannerRecordatorios'
-import { useConsultasNuevas, useHoy, useRecordatoriosDeHoy, useTareasUrgentes } from './hooks'
+import { useAvisosDelCalendario, useConsultasNuevas, useHoy, useRecordatoriosDeHoy, useTareasUrgentes } from './hooks'
 import { rutasPrincipalesMovil, secciones, type ItemNav } from './nav'
 import { ThemeToggle } from './ThemeToggle'
 
@@ -35,8 +35,9 @@ export function Shell() {
   const urgentes = useTareasUrgentes()
   const consultasNuevas = useConsultasNuevas()
   const avisos = useRecordatoriosDeHoy()
+  const avisosCalendario = useAvisosDelCalendario()
   const hoy = useHoy()
-  const [descartadoEl, setDescartadoEl] = useState<number | null>(null)
+  const [descartado, setDescartado] = useState<string | null>(null)
   const [masAbierto, setMasAbierto] = useState(false)
 
   // Crea las tareas automáticas que toquen (una vez por sesión).
@@ -44,8 +45,10 @@ export function Shell() {
     generarTareasRecurrentes().catch(() => undefined)
   }, [])
 
-  // Cerrar el aviso lo oculta solo por hoy: mañana vuelve a avisar si todavía falta algo.
-  const mostrarAvisos = avisos.length > 0 && descartadoEl !== hoy.getTime()
+  // Cerrar el aviso lo oculta por hoy: mañana vuelve a avisar, y si aparece algo
+  // nuevo en el calendario (otra firma) también se muestra de nuevo.
+  const firmaAvisos = `${hoy.getTime()}|${avisos.map((a) => a.regla.id).join(',')}|${avisosCalendario.map((a) => `${a.evento.id}:${a.cuando}`).join(',')}`
+  const mostrarAvisos = avisos.length + avisosCalendario.length > 0 && descartado !== firmaAvisos
   const conteos = { tareas: urgentes, consultas: consultasNuevas }
   const actual = secciones.find((s) => location.pathname.startsWith(s.ruta))
 
@@ -110,8 +113,10 @@ export function Shell() {
                 <BannerRecordatorios
                   key="avisos"
                   avisos={avisos}
+                  eventos={avisosCalendario}
                   onVerTareas={() => navigate('/tareas')}
-                  onCerrar={() => setDescartadoEl(hoy.getTime())}
+                  onVerCalendario={() => navigate('/calendario')}
+                  onCerrar={() => setDescartado(firmaAvisos)}
                 />
               )}
             </AnimatePresence>
