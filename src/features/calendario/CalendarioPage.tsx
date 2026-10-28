@@ -2,7 +2,7 @@ import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameDay,
 import { es } from 'date-fns/locale'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Pencil, Plus, Trash2, Undo2 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAbonos, useColaboraciones, useEventos } from '../../data/useData'
 import { cobrosComoEventos, esCobroDeAbono } from '../../domain/abonos'
 import { etiquetaTipoEvento, tipoDeEvento, tiposEvento } from '../../domain/eventos'
@@ -27,21 +27,11 @@ const tipoDe = tipoDeEvento
 
 const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
-function useEsEscritorio(): boolean {
-  const [esEscritorio, setEsEscritorio] = useState(() => matchMedia('(min-width: 1024px)').matches)
-  useEffect(() => {
-    const consulta = matchMedia('(min-width: 1024px)')
-    const alCambiar = (e: MediaQueryListEvent) => setEsEscritorio(e.matches)
-    consulta.addEventListener('change', alCambiar)
-    return () => consulta.removeEventListener('change', alCambiar)
-  }, [])
-  return esEscritorio
-}
-
 /**
  * Calendario compartido del equipo. Las tareas y colaboraciones con fecha
- * aparecen solas; también se pueden cargar eventos sueltos. En la
- * compu el detalle del día queda a la derecha; en el celular sube desde abajo.
+ * aparecen solas; también se pueden cargar eventos sueltos. La grilla ocupa
+ * toda la sección y lo de cada día se ve en una ventana en el medio de la
+ * pantalla al tocarlo.
  */
 export function CalendarioPage() {
   const { datos } = useEventos()
@@ -51,7 +41,6 @@ export function CalendarioPage() {
   const [seleccionado, setSeleccionado] = useState(() => new Date())
   const [detalleAbierto, setDetalleAbierto] = useState(false)
   const dialogo = useDialogo<{ evento?: EventoCalendario; fecha: Date }>()
-  const esEscritorio = useEsEscritorio()
 
   const inicioGrilla = startOfWeek(startOfMonth(mes), { weekStartsOn: 1 })
   const finGrilla = endOfWeek(endOfMonth(mes), { weekStartsOn: 1 })
@@ -78,10 +67,12 @@ export function CalendarioPage() {
   function elegirDia(d: Date) {
     setSeleccionado(d)
     if (!isSameMonth(d, mes)) irA(d, d > mes ? 1 : -1)
-    if (!esEscritorio) setDetalleAbierto(true)
+    setDetalleAbierto(true)
   }
 
   const eventosSeleccionado = eventosDe(seleccionado)
+  // Cuántos eventos se ven dentro de cada celda; el resto queda como "+N más" y se ve al tocar el día.
+  const visibles = 2
 
   return (
     <>
@@ -92,8 +83,8 @@ export function CalendarioPage() {
         acciones={<PrimaryAction etiqueta="Nuevo evento" onClick={() => dialogo.abrir({ fecha: seleccionado })} />}
       />
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_21rem]">
-        <Card className="overflow-hidden">
+      <div>
+        <Card className="overflow-hidden lg:flex lg:h-[calc(100dvh-15rem)] lg:min-h-[34rem] lg:flex-col">
           <div className="flex items-center gap-2 border-b border-line px-4 py-3.5 sm:px-5">
             <div className="relative h-8 min-w-0 flex-1 overflow-hidden">
               <AnimatePresence mode="popLayout" custom={direccion} initial={false}>
@@ -136,7 +127,7 @@ export function CalendarioPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: direccion * -36 }}
               transition={{ duration: 0.24, ease: 'easeOut' }}
-              className="grid grid-cols-7"
+              className="grid grid-cols-7 lg:min-h-0 lg:flex-1 lg:[grid-auto-rows:minmax(0,1fr)]"
             >
               {dias.map((d) => {
                 const delMes = isSameMonth(d, mes)
@@ -150,26 +141,26 @@ export function CalendarioPage() {
                     aria-label={`${fechaLarga(d)}${evs.length ? `, ${evs.length} ${evs.length === 1 ? 'evento' : 'eventos'}` : ''}`}
                     aria-pressed={esSel}
                     className={cn(
-                      'relative flex min-h-[4.6rem] flex-col items-stretch gap-1 border-b border-r border-line/70 p-1.5 text-left transition-colors hover:bg-brand-500/6 sm:min-h-[6.2rem] sm:p-2',
+                      'relative flex min-h-[4.6rem] flex-col items-stretch gap-1 overflow-hidden border-b border-r border-line/70 p-1.5 text-left transition-colors hover:bg-brand-500/6 sm:min-h-[6.2rem] sm:p-2 lg:min-h-0 lg:p-2.5',
                       !delMes && 'bg-surface2/40',
                     )}
                   >
                     {esSel && <motion.span layoutId="dia-seleccionado" transition={{ type: 'spring', stiffness: 500, damping: 36 }} className="pointer-events-none absolute inset-0.5 rounded-xl ring-2 ring-brand-500/70" />}
                     <span
                       className={cn(
-                        'relative grid size-7 place-items-center rounded-full text-[13px] font-bold',
+                        'relative grid size-7 shrink-0 place-items-center rounded-full text-[13px] font-bold lg:size-8 lg:text-sm',
                         isToday(d) ? 'bg-brand-500 text-white shadow-md' : delMes ? 'text-ink' : 'text-faint/70',
                       )}
                     >
                       {d.getDate()}
                     </span>
                     <span className="relative hidden flex-col gap-0.5 sm:flex">
-                      {evs.slice(0, 2).map((e) => (
-                        <span key={e.id} style={estiloPastilla(colorDe(e))} className="truncate rounded-md px-1.5 py-0.5 text-[11px] font-semibold leading-tight">
+                      {evs.slice(0, visibles).map((e) => (
+                        <span key={e.id} style={estiloPastilla(colorDe(e))} className="truncate rounded-md px-1.5 py-0.5 text-[11px] font-semibold leading-tight lg:py-1 lg:text-xs">
                           {e.titulo}
                         </span>
                       ))}
-                      {evs.length > 2 && <span className="px-1 text-[11px] font-semibold text-faint">+{evs.length - 2} más</span>}
+                      {evs.length > visibles && <span className="px-1 text-[11px] font-semibold text-faint lg:text-xs">+{evs.length - visibles} más</span>}
                     </span>
                     {evs.length > 0 && (
                       <span className="relative mt-auto flex gap-0.5 sm:hidden">
@@ -193,35 +184,35 @@ export function CalendarioPage() {
             ))}
           </div>
         </Card>
-
-        {esEscritorio && (
-          <div className="sticky top-8">
-            <PanelDia fecha={seleccionado} eventos={eventosSeleccionado} colorDe={colorDe} abonos={abonos ?? []} onNuevo={() => dialogo.abrir({ fecha: seleccionado })} onEditar={(e) => dialogo.abrir({ evento: e, fecha: e.fecha })} />
-          </div>
-        )}
       </div>
 
-      {!esEscritorio && (
-        <Modal open={detalleAbierto} onClose={() => setDetalleAbierto(false)} titulo={fechaLarga(seleccionado)} size="sm" sinRelleno>
-          <div className="px-5 pb-5">
-            <PanelDia
-              fecha={seleccionado}
-              eventos={eventosSeleccionado}
-              colorDe={colorDe}
-              abonos={abonos ?? []}
-              sinMarco
-              onNuevo={() => {
-                setDetalleAbierto(false)
-                dialogo.abrir({ fecha: seleccionado })
-              }}
-              onEditar={(e) => {
-                setDetalleAbierto(false)
-                dialogo.abrir({ evento: e, fecha: e.fecha })
-              }}
-            />
-          </div>
-        </Modal>
-      )}
+      <Modal
+        open={detalleAbierto}
+        onClose={() => setDetalleAbierto(false)}
+        titulo={fechaLarga(seleccionado)}
+        descripcion={eventosSeleccionado.length === 0 ? 'Sin nada cargado' : `${eventosSeleccionado.length} ${eventosSeleccionado.length === 1 ? 'evento' : 'eventos'}`}
+        size="md"
+        centrado
+        sinRelleno
+      >
+        <div className="px-5 pb-5">
+          <PanelDia
+            fecha={seleccionado}
+            eventos={eventosSeleccionado}
+            colorDe={colorDe}
+            abonos={abonos ?? []}
+            sinMarco
+            onNuevo={() => {
+              setDetalleAbierto(false)
+              dialogo.abrir({ fecha: seleccionado })
+            }}
+            onEditar={(e) => {
+              setDetalleAbierto(false)
+              dialogo.abrir({ evento: e, fecha: e.fecha })
+            }}
+          />
+        </div>
+      </Modal>
 
       <EventoForm dialogo={dialogo} />
     </>

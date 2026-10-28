@@ -51,6 +51,8 @@ export function Shell() {
   const mostrarAvisos = avisos.length + avisosCalendario.length > 0 && descartado !== firmaAvisos
   const conteos = { tareas: urgentes, consultas: consultasNuevas }
   const actual = secciones.find((s) => location.pathname.startsWith(s.ruta))
+  // El calendario usa todo el ancho disponible; el resto de las secciones, un ancho cómodo de lectura.
+  const enCalendario = location.pathname.startsWith('/calendario')
 
   const principales = secciones.filter((s) => rutasPrincipalesMovil.includes(s.ruta))
   const secundarias = secciones.filter((s) => !rutasPrincipalesMovil.includes(s.ruta))
@@ -107,7 +109,7 @@ export function Shell() {
         </header>
 
         <main className="px-4 pb-32 pt-6 sm:px-8 lg:pb-14 lg:pt-10">
-          <div className="mx-auto max-w-6xl">
+          <div className={cn('mx-auto', enCalendario ? 'max-w-[120rem]' : 'max-w-6xl')}>
             <AnimatePresence initial={false}>
               {mostrarAvisos && (
                 <BannerRecordatorios

@@ -18,13 +18,15 @@ interface Props {
   pie?: ReactNode
   /** Sin relleno en el cuerpo (para contenido que va de borde a borde). */
   sinRelleno?: boolean
+  /** Aparece en el medio de la pantalla también en el celular (en vez de subir como hoja desde abajo). */
+  centrado?: boolean
 }
 
 /**
  * Ventana modal. En pantallas grandes aparece en el centro; en el celular
  * sube desde abajo como una hoja. Se cierra con Escape o tocando afuera.
  */
-export function Modal({ open, onClose, titulo, descripcion, size = 'md', children, pie, sinRelleno }: Props) {
+export function Modal({ open, onClose, titulo, descripcion, size = 'md', children, pie, sinRelleno, centrado }: Props) {
   const idTitulo = useId()
 
   useEffect(() => {
@@ -42,7 +44,7 @@ export function Modal({ open, onClose, titulo, descripcion, size = 'md', childre
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6">
+        <div className={cn('fixed inset-0 z-50 flex justify-center sm:items-center sm:p-6', centrado ? 'items-center p-4' : 'items-end')}>
           <motion.div
             className="absolute inset-0 bg-ink/45 backdrop-blur-[3px]"
             initial={{ opacity: 0 }}
@@ -60,7 +62,8 @@ export function Modal({ open, onClose, titulo, descripcion, size = 'md', childre
             exit={{ opacity: 0, y: 24, scale: 0.97, transition: { duration: 0.15 } }}
             transition={{ type: 'spring', stiffness: 380, damping: 32 }}
             className={cn(
-              'relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-3xl border border-line bg-surface shadow-pop sm:max-h-[88dvh] sm:rounded-3xl',
+              'relative flex w-full flex-col overflow-hidden border border-line bg-surface shadow-pop sm:max-h-[88dvh] sm:rounded-3xl',
+              centrado ? 'max-h-[88dvh] rounded-3xl' : 'max-h-[92dvh] rounded-t-3xl',
               anchos[size],
             )}
           >
