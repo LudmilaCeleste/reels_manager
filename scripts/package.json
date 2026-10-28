@@ -1,0 +1,10 @@
+{
+  "name": "acemedia-avisos",
+  "private": true,
+  "type": "module",
+  "description": "Programa que manda los avisos diarios al telefono (lo corre GitHub Actions). Sus dependencias van aparte para no pesar en la app.",
+  "dependencies": {
+    "firebase-admin": "^13.0.0",
+    "web-push": "^3.6.7"
+  }
+}

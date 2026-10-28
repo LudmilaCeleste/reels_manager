@@ -14,3 +14,9 @@ dist/
 # Editores y sistema
 .idea/
 .DS_Store
+
+# Claves privadas del programa de avisos: nunca al repositorio
+scripts/vapid-privada.txt
+scripts/*.json.local
+*firebase-adminsdk*.json
+service-account*.json

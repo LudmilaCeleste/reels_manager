@@ -32,6 +32,7 @@ export const COLECCION = {
   propuestas: 'propuestas',
   notas: 'notas',
   consultas: 'consultas',
+  suscripcionesPush: 'suscripciones_push',
 } as const
 
 const texto = (v: unknown, def = ''): string => (typeof v === 'string' ? v : def)

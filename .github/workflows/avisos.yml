@@ -1,0 +1,53 @@
+name: Avisos al telefono
+
+# Todas las mananas manda a los telefonos que activaron las notificaciones el
+# resumen del dia: lo del calendario de hoy y de manana, cobros de abonos,
+# recordatorios de tareas y consultas sin responder. Si no hay nada, no manda
+# nada. Tambien se puede correr a mano desde la pestana Actions
+# ("Run workflow"), con la opcion de mandar una notificacion de prueba.
+#
+# Necesita dos secretos en GitHub (Settings > Secrets and variables > Actions):
+#   FIREBASE_SERVICE_ACCOUNT  el JSON de la clave de servicio de Firebase
+#   VAPID_PRIVATE_KEY         la clave privada de las notificaciones
+# Si faltan, el trabajo se salta solo (no falla ni manda mails de error).
+on:
+  schedule:
+    # 12:00 UTC = 09:00 en Argentina. GitHub puede demorarlo unos minutos.
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+    inputs:
+      prueba:
+        description: "Mandar una notificacion de prueba a todos (aunque no haya avisos)"
+        type: boolean
+        default: false
+
+jobs:
+  avisar:
+    runs-on: ubuntu-latest
+    env:
+      TIENE_CLAVES: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' && secrets.VAPID_PRIVATE_KEY != '' }}
+    steps:
+      - name: Avisar si faltan los secretos
+        if: env.TIENE_CLAVES != 'true'
+        run: echo "::warning::Faltan los secretos FIREBASE_SERVICE_ACCOUNT y/o VAPID_PRIVATE_KEY. No se mandan avisos hasta cargarlos."
+      - uses: actions/checkout@v4
+        if: env.TIENE_CLAVES == 'true'
+      - uses: actions/setup-node@v4
+        if: env.TIENE_CLAVES == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - name: Instalar
+        if: env.TIENE_CLAVES == 'true'
+        run: |
+          npm ci
+          npm ci --prefix scripts
+      - name: Mandar avisos
+        if: env.TIENE_CLAVES == 'true'
+        run: npx tsx scripts/enviar-avisos.ts
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          # Clave pública: la misma que vapidClavePublica en src/config.ts (no es secreta).
+          VAPID_PUBLIC_KEY: BN8XnIKgJVxRzilx3VbqMSS1_DO4ZcMnY2ZLtSo1C73bm7ALZbH6FjpKDOZXCCODtHMrrpl_nfZiQ_WffawuHK8
+          PRUEBA: ${{ inputs.prueba }}

@@ -31,3 +31,11 @@ export const firebaseConfig = {
 export const esDemo =
   import.meta.env.VITE_DEMO === 'true' ||
   (import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demo'))
+
+/**
+ * Clave pública (VAPID) para las notificaciones al teléfono. La privada NO va
+ * en el código: vive como secreto `VAPID_PRIVATE_KEY` en GitHub. Si se cambia
+ * esta, hay que cambiar también la del workflow `.github/workflows/avisos.yml`
+ * y volver a activar las notificaciones en cada dispositivo.
+ */
+export const vapidClavePublica = 'BN8XnIKgJVxRzilx3VbqMSS1_DO4ZcMnY2ZLtSo1C73bm7ALZbH6FjpKDOZXCCODtHMrrpl_nfZiQ_WffawuHK8'

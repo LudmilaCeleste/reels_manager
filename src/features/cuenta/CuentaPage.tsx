@@ -7,6 +7,7 @@ import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
 import { Card } from '../../ui/Card'
 import { Avatar, PageHeader } from '../../ui/Pieces'
+import { Notificaciones } from './Notificaciones'
 
 export function CuentaPage() {
   const { usuario, cerrarSesion } = useAuth()
@@ -48,6 +49,8 @@ export function CuentaPage() {
               <ThemeToggle />
             </div>
           </Card>
+
+          <Notificaciones />
 
           <Card className="space-y-4 p-6">
             <div className="flex items-start gap-3">

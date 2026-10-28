@@ -108,3 +108,32 @@ src/
 - **Actualización con un clic**: cada publicación deja un `version.json`. La app lo consulta
   al abrir, cada 5 minutos y al volver a la pestaña; si hay una versión nueva muestra
   "Actualizar ahora", que recarga y deja la última versión sin perder nada.
+
+## Notificaciones al teléfono
+
+Cada persona las activa una vez en **Cuenta → Notificaciones en el teléfono**. En el iPhone
+solo funcionan con la app agregada a la pantalla de inicio (iOS 16.4 o más nuevo).
+
+Todas las mañanas (≈ 9:00 de Argentina) un programa de GitHub Actions
+([`.github/workflows/avisos.yml`](.github/workflows/avisos.yml), código en
+[`scripts/enviar-avisos.ts`](scripts/enviar-avisos.ts)) manda un resumen: lo del calendario de
+hoy y mañana, cobros de abonos sin pagar, recordatorios de tareas automáticas, tareas para hoy
+o vencidas y consultas sin responder. Si no hay nada, no manda nada. Usa la misma lógica que el
+aviso de arriba de la app (`src/domain/avisosDiarios.ts`).
+
+**Configuración (una sola vez)** en GitHub → Settings → Secrets and variables → Actions →
+*New repository secret*:
+
+| Secreto                    | Qué es                                                                                                             |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `FIREBASE_SERVICE_ACCOUNT` | Todo el contenido del JSON de la clave de servicio: Firebase → Configuración del proyecto → Cuentas de servicio → *Generar nueva clave privada* |
+| `VAPID_PRIVATE_KEY`        | La clave privada de las notificaciones (`scripts/vapid-privada.txt`, que git ignora)                                |
+
+Sin esos secretos el trabajo se salta solo. Para probar: pestaña **Actions → Avisos al telefono →
+Run workflow** con *prueba* tildada manda una notificación a todos los dispositivos activados.
+Los dispositivos que dejaron de recibir (app desinstalada) se dan de baja solos.
+
+Los dispositivos suscriptos se guardan en la colección `suscripciones_push` de Firestore (solo
+accesible para el equipo). La clave pública está en `src/config.ts`; si se cambia el par de
+claves hay que cambiarla también en el workflow y volver a activar cada dispositivo.
+
