@@ -18,12 +18,12 @@ export interface AvisoDiario {
   url: string
 }
 
-/** Qué se avisa. Por ahora solo las tareas que vencen hoy; lo demás está listo para prender. */
+/** Qué se avisa. Por ahora solo lo que pasa ese mismo día; lo demás está listo para prender. */
 export interface QueAvisar {
-  /** Tareas pendientes cuya fecha límite es hoy. */
-  tareasDeHoy: boolean
-  /** Lo del calendario de hoy y mañana, con los cobros de abonos sin pagar. */
-  calendario: boolean
+  /** Lo que hay en el calendario hoy (eventos, tareas con fecha, cobros de abonos sin pagar) y tareas que vencen hoy. */
+  deHoy: boolean
+  /** Además, lo del calendario de mañana (el aviso de un día antes). */
+  deManana: boolean
   /** Recordatorios de las tareas automáticas (lunes, miércoles y viernes...). */
   recordatorios: boolean
   /** Cuántas tareas están vencidas o vencen hoy. */
@@ -32,38 +32,43 @@ export interface QueAvisar {
   consultas: boolean
 }
 
-export const avisosActivos: QueAvisar = { tareasDeHoy: true, calendario: false, recordatorios: false, urgentes: false, consultas: false }
+export const avisosActivos: QueAvisar = { deHoy: true, deManana: false, recordatorios: false, urgentes: false, consultas: false }
 
 const MAXIMO_LINEAS = 5
 
-const venceHoy = (t: Tarea, hoy: Date): boolean =>
-  !t.hecha &&
-  t.fechaLimite !== null &&
-  t.fechaLimite.getFullYear() === hoy.getFullYear() &&
-  t.fechaLimite.getMonth() === hoy.getMonth() &&
-  t.fechaLimite.getDate() === hoy.getDate()
+const mismoDia = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 
 /**
- * El aviso que se manda al teléfono todas las mañanas. Con la configuración de
- * `avisosActivos`, avisa las tareas que vencen ese mismo día. Si no hay nada que
- * avisar, `null` (no se manda ninguna notificación).
+ * El aviso que se manda al teléfono todas las mañanas. Con la configuración
+ * actual (`avisosActivos`) avisa lo que hay ese mismo día en el calendario, más
+ * las tareas que vencen hoy aunque no estén en el calendario. Si no hay nada
+ * que avisar, `null` (no se manda ninguna notificación).
  */
 export function armarAvisoDiario(datos: DatosAvisos, hoy: Date, que: QueAvisar = avisosActivos): AvisoDiario | null {
   const manana = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 1)
   const lineas: string[] = []
-  let url = '/#/tareas'
+  let hayDelCalendario = false
 
-  const deHoy = que.tareasDeHoy ? datos.tareas.filter((t) => venceHoy(t, hoy)).sort((a, b) => a.titulo.localeCompare(b.titulo, 'es')) : []
-  for (const t of deHoy) lineas.push(t.cliente ? `${t.titulo} · ${t.cliente}` : t.titulo)
-
-  if (que.calendario) {
-    const delCalendario = avisosDelCalendario([...datos.eventos, ...cobrosComoEventos(datos.abonos, hoy, manana)], hoy)
+  if (que.deHoy || que.deManana) {
+    const delCalendario = avisosDelCalendario([...datos.eventos, ...cobrosComoEventos(datos.abonos, hoy, manana)], hoy).filter(
+      ({ cuando }) => cuando === 'hoy' || que.deManana,
+    )
     for (const { evento, cuando } of delCalendario) {
       const tipo = tipoDeEvento(evento)
       const etiqueta = tipo === 'evento' || tipo === 'tarea' ? '' : ` (${etiquetaTipoEvento[tipo].toLowerCase()})`
-      lineas.push(`${cuando === 'hoy' ? 'Hoy' : 'Mañana'}: ${evento.titulo}${etiqueta}`)
+      // Si solo se avisa lo de hoy, "Hoy:" sobra; con lo de mañana hace falta para distinguir.
+      const prefijo = que.deManana ? `${cuando === 'hoy' ? 'Hoy' : 'Mañana'}: ` : ''
+      lineas.push(`${prefijo}${evento.titulo}${etiqueta}`)
     }
-    if (delCalendario.length > 0 && deHoy.length === 0) url = '/#/calendario'
+    hayDelCalendario = delCalendario.length > 0
+  }
+
+  if (que.deHoy) {
+    // Las tareas "agregadas al calendario" ya salieron arriba como evento; acá van las que no.
+    const sinCalendario = datos.tareas
+      .filter((t) => !t.hecha && !t.agregarAlCalendario && t.fechaLimite !== null && mismoDia(t.fechaLimite, hoy))
+      .sort((a, b) => a.titulo.localeCompare(b.titulo, 'es'))
+    for (const t of sinCalendario) lineas.push(t.cliente ? `${t.titulo} · ${t.cliente}` : t.titulo)
   }
 
   if (que.recordatorios) for (const aviso of recordatoriosDeHoy(datos.reglas, datos.tareas, hoy)) lineas.push(aviso.texto)
@@ -83,9 +88,9 @@ export function armarAvisoDiario(datos: DatosAvisos, hoy: Date, que: QueAvisar =
   const mostradas = lineas.slice(0, MAXIMO_LINEAS)
   if (lineas.length > MAXIMO_LINEAS) mostradas.push(`y ${lineas.length - MAXIMO_LINEAS} más`)
 
-  // Si solo hay tareas de hoy, el título lo dice claro: "Hoy tenés 2 tareas para hacer".
-  const soloTareas = !que.calendario && !que.recordatorios && !que.urgentes && !que.consultas
-  const titulo = soloTareas ? (deHoy.length === 1 ? 'Hoy tenés 1 tarea para hacer' : `Hoy tenés ${deHoy.length} tareas para hacer`) : 'AceMedia Marketing'
+  // Si solo se avisa lo de hoy, el título lo dice claro: "Hoy tenés 2 cosas para hacer".
+  const soloDeHoy = !que.deManana && !que.recordatorios && !que.urgentes && !que.consultas
+  const titulo = soloDeHoy ? (lineas.length === 1 ? 'Hoy tenés 1 cosa para hacer' : `Hoy tenés ${lineas.length} cosas para hacer`) : 'AceMedia Marketing'
 
-  return { titulo, cuerpo: mostradas.join('\n'), url }
+  return { titulo, cuerpo: mostradas.join('\n'), url: hayDelCalendario ? '/#/calendario' : '/#/tareas' }
 }

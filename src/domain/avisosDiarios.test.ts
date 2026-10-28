@@ -5,7 +5,7 @@ import type { Abono, Consulta, EventoCalendario, Tarea } from './types'
 const hoy = new Date(2026, 9, 28)
 
 const vacio: DatosAvisos = { eventos: [], abonos: [], tareas: [], reglas: [], consultas: [] }
-const todo: QueAvisar = { tareasDeHoy: true, calendario: true, recordatorios: true, urgentes: true, consultas: true }
+const todo: QueAvisar = { deHoy: true, deManana: true, recordatorios: true, urgentes: true, consultas: true }
 
 const evento = (p: Partial<EventoCalendario>): EventoCalendario => ({
   id: 'e', titulo: 'Evento', fecha: hoy, descripcion: '', colaboracionId: null, tipo: null, abonoId: null, ...p,
@@ -17,33 +17,53 @@ const consulta = (estado: Consulta['estado']): Consulta => ({
   id: 'c', nombre: 'Ana', negocio: '', sector: 'Bar', intereses: [], contacto: 'ana@bar.com', mensaje: '', idioma: 'es', estado, creadaEn: hoy,
 })
 const abono = (p: Partial<Abono> = {}): Abono => ({
-  id: 'a1', nombreCliente: 'Estética Aura', instagramCliente: '', descripcion: '', montoMensual: 90000, diaCobro: 29, desde: new Date(2026, 8, 1), activo: true, mesesPagados: [], color: null, ...p,
+  id: 'a1', nombreCliente: 'Estética Aura', instagramCliente: '', descripcion: '', montoMensual: 90000, diaCobro: 28, desde: new Date(2026, 8, 1), activo: true, mesesPagados: [], color: null, ...p,
 })
 
-describe('aviso diario al teléfono: tareas que vencen hoy', () => {
-  it('por ahora solo avisa las tareas', () => {
-    expect(avisosActivos).toEqual({ tareasDeHoy: true, calendario: false, recordatorios: false, urgentes: false, consultas: false })
+describe('aviso diario al teléfono: lo que pasa ese mismo día', () => {
+  it('por ahora solo avisa lo de hoy', () => {
+    expect(avisosActivos).toEqual({ deHoy: true, deManana: false, recordatorios: false, urgentes: false, consultas: false })
   })
 
-  it('no manda nada si no hay tareas para hoy', () => {
+  it('no manda nada si no hay nada hoy', () => {
     expect(armarAvisoDiario(vacio, hoy)).toBeNull()
   })
 
-  it('avisa la tarea que vence hoy, con su cliente', () => {
-    const aviso = armarAvisoDiario({ ...vacio, tareas: [tarea({ titulo: 'Editar reel', cliente: 'Hotel Mirador', fechaLimite: hoy })] }, hoy)
-    expect(aviso).toEqual({ titulo: 'Hoy tenés 1 tarea para hacer', cuerpo: 'Editar reel · Hotel Mirador', url: '/#/tareas' })
-  })
-
-  it('con varias, las lista por orden alfabético y el título cuenta cuántas son', () => {
+  it('avisa lo que hay en el calendario hoy, con su tipo', () => {
     const aviso = armarAvisoDiario(
-      { ...vacio, tareas: [tarea({ id: '1', titulo: 'Zeta', fechaLimite: hoy }), tarea({ id: '2', titulo: 'Alfa', fechaLimite: new Date(2026, 9, 28, 15) })] },
+      { ...vacio, eventos: [evento({ titulo: 'Grabar en Bar Pepe', tipo: 'grabacion' }), evento({ id: 'r', titulo: 'Capacitación' })] },
       hoy,
     )
-    expect(aviso?.titulo).toBe('Hoy tenés 2 tareas para hacer')
-    expect(aviso?.cuerpo).toBe('Alfa\nZeta')
+    expect(aviso).toEqual({ titulo: 'Hoy tenés 2 cosas para hacer', cuerpo: 'Capacitación\nGrabar en Bar Pepe (grabación)', url: '/#/calendario' })
   })
 
-  it('no avisa las hechas, las de otros días ni las vencidas', () => {
+  it('no avisa lo de mañana, ni lo de ayer', () => {
+    const eventos = [evento({ id: 'm', fecha: new Date(2026, 9, 29) }), evento({ id: 'a', fecha: new Date(2026, 9, 27) })]
+    expect(armarAvisoDiario({ ...vacio, eventos }, hoy)).toBeNull()
+  })
+
+  it('avisa el cobro de un abono que toca hoy y sigue sin pagar, y no si ya está pagado', () => {
+    expect(armarAvisoDiario({ ...vacio, abonos: [abono()] }, hoy)?.cuerpo).toBe('Estética Aura (abono mensual)')
+    expect(armarAvisoDiario({ ...vacio, abonos: [abono({ mesesPagados: ['2026-10'] })] }, hoy)).toBeNull()
+  })
+
+  it('una tarea con calendario sale una sola vez (como evento), y las tareas sin calendario también avisan', () => {
+    const aviso = armarAvisoDiario(
+      {
+        ...vacio,
+        eventos: [evento({ id: 'tarea-t1', titulo: 'Tarea: Editar reel', tipo: 'tarea' })],
+        tareas: [
+          tarea({ id: 't1', titulo: 'Editar reel', fechaLimite: hoy, agregarAlCalendario: true }),
+          tarea({ id: 't2', titulo: 'Pasar presupuesto', cliente: 'Hotel Mirador', fechaLimite: hoy }),
+        ],
+      },
+      hoy,
+    )
+    expect(aviso?.titulo).toBe('Hoy tenés 2 cosas para hacer')
+    expect(aviso?.cuerpo).toBe('Tarea: Editar reel\nPasar presupuesto · Hotel Mirador')
+  })
+
+  it('no avisa las tareas hechas, las de otros días ni las vencidas', () => {
     const tareas = [
       tarea({ id: '1', fechaLimite: hoy, hecha: true }),
       tarea({ id: '2', fechaLimite: new Date(2026, 9, 29) }),
@@ -53,42 +73,37 @@ describe('aviso diario al teléfono: tareas que vencen hoy', () => {
     expect(armarAvisoDiario({ ...vacio, tareas }, hoy)).toBeNull()
   })
 
-  it('un evento del calendario, un cobro o una consulta no avisan por ahora', () => {
-    const datos: DatosAvisos = { ...vacio, eventos: [evento({})], abonos: [abono()], consultas: [consulta('nueva')] }
-    expect(armarAvisoDiario(datos, hoy)).toBeNull()
+  it('una sola cosa dice "1 cosa", y si son muchas recorta a 5 líneas y cuenta las que faltan', () => {
+    expect(armarAvisoDiario({ ...vacio, eventos: [evento({})] }, hoy)?.titulo).toBe('Hoy tenés 1 cosa para hacer')
+    const eventos = Array.from({ length: 7 }, (_, i) => evento({ id: `e${i}`, titulo: `Evento ${i}` }))
+    const aviso = armarAvisoDiario({ ...vacio, eventos }, hoy)
+    expect(aviso?.titulo).toBe('Hoy tenés 7 cosas para hacer')
+    expect(aviso?.cuerpo.split('\n')).toHaveLength(6)
+    expect(aviso?.cuerpo.split('\n').at(-1)).toBe('y 2 más')
   })
 
-  it('recorta a 5 líneas y dice cuántas más hay', () => {
-    const tareas = Array.from({ length: 7 }, (_, i) => tarea({ id: `t${i}`, titulo: `Tarea ${i}`, fechaLimite: hoy }))
-    const lineas = armarAvisoDiario({ ...vacio, tareas }, hoy)?.cuerpo.split('\n')
-    expect(lineas).toHaveLength(6)
-    expect(lineas?.at(-1)).toBe('y 2 más')
+  it('las consultas y los recordatorios no avisan por ahora', () => {
+    expect(armarAvisoDiario({ ...vacio, consultas: [consulta('nueva')] }, hoy)).toBeNull()
   })
 })
 
 describe('aviso diario con todo prendido (para cuando se quiera sumar más)', () => {
-  it('junta lo de hoy y mañana del calendario, con su tipo', () => {
+  it('suma lo de mañana con su etiqueta "Hoy:" / "Mañana:"', () => {
     const aviso = armarAvisoDiario(
-      { ...vacio, eventos: [evento({ titulo: 'Grabar en Bar Pepe', tipo: 'grabacion' }), evento({ id: 'm', titulo: 'Reunión', fecha: new Date(2026, 9, 29), tipo: 'reunion' })] },
+      { ...vacio, eventos: [evento({ titulo: 'Grabar', tipo: 'grabacion' }), evento({ id: 'm', titulo: 'Reunión', fecha: new Date(2026, 9, 29), tipo: 'reunion' })] },
       hoy,
       todo,
     )
-    expect(aviso?.cuerpo).toBe('Hoy: Grabar en Bar Pepe (grabación)\nMañana: Reunión (reunión)')
-    expect(aviso?.url).toBe('/#/calendario')
-  })
-
-  it('avisa el cobro de un abono sin pagar el día antes, y no si ya está pagado', () => {
-    expect(armarAvisoDiario({ ...vacio, abonos: [abono()] }, hoy, todo)?.cuerpo).toBe('Mañana: Estética Aura (abono mensual)')
-    expect(armarAvisoDiario({ ...vacio, abonos: [abono({ mesesPagados: ['2026-10'] })] }, hoy, todo)).toBeNull()
+    expect(aviso?.cuerpo).toBe('Hoy: Grabar (grabación)\nMañana: Reunión (reunión)')
+    expect(aviso?.titulo).toBe('AceMedia Marketing')
   })
 
   it('cuenta tareas urgentes y consultas sin responder', () => {
     const aviso = armarAvisoDiario(
-      { ...vacio, tareas: [tarea({ fechaLimite: new Date(2026, 9, 20) }), tarea({ id: 't3', fechaLimite: hoy, hecha: true })], consultas: [consulta('nueva'), consulta('respondida')] },
+      { ...vacio, tareas: [tarea({ fechaLimite: new Date(2026, 9, 20) })], consultas: [consulta('nueva'), consulta('respondida')] },
       hoy,
-      { ...todo, tareasDeHoy: false },
+      { ...todo, deHoy: false, deManana: false },
     )
     expect(aviso?.cuerpo).toBe('1 tarea para hoy o vencida\n1 consulta de la web sin responder')
-    expect(aviso?.titulo).toBe('AceMedia Marketing')
   })
 })
