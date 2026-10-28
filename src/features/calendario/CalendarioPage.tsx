@@ -1,16 +1,18 @@
 import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, startOfMonth, startOfWeek, subMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CalendarDays, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react'
+import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Pencil, Plus, Trash2, Undo2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useAbonos, useColaboraciones, useEventos } from '../../data/useData'
+import { cobrosComoEventos, esCobroDeAbono } from '../../domain/abonos'
 import { etiquetaTipoEvento, tipoDeEvento, tiposEvento } from '../../domain/eventos'
-import type { EventoCalendario, TipoEvento } from '../../domain/types'
+import type { Abono, EventoCalendario, TipoEvento } from '../../domain/types'
 import { cn } from '../../lib/cn'
 import { aInputFecha, capitalizar, desdeInputFecha, fechaLarga } from '../../lib/dates'
+import { marcarMesAbono } from '../../services/abonos'
 import { eliminarEvento, guardarEvento } from '../../services/calendario'
 import { Button, IconButton } from '../../ui/Button'
-import { estilosEvento as estilos } from '../../ui/estilosEvento'
+import { type ColorEvento, colorDeEvento, coloresTipo, estiloFicha, estiloPastilla, estiloPunto, pluralTipoEvento } from '../../ui/estilosEvento'
 import { Card } from '../../ui/Card'
 import { useConfirmar } from '../../ui/Confirm'
 import { Campo, Input, Select, Textarea } from '../../ui/Fields'
@@ -43,6 +45,7 @@ function useEsEscritorio(): boolean {
  */
 export function CalendarioPage() {
   const { datos } = useEventos()
+  const { datos: abonos } = useAbonos()
   const [mes, setMes] = useState(() => startOfMonth(new Date()))
   const [direccion, setDireccion] = useState(1)
   const [seleccionado, setSeleccionado] = useState(() => new Date())
@@ -50,7 +53,13 @@ export function CalendarioPage() {
   const dialogo = useDialogo<{ evento?: EventoCalendario; fecha: Date }>()
   const esEscritorio = useEsEscritorio()
 
-  const eventos = datos ?? []
+  const inicioGrilla = startOfWeek(startOfMonth(mes), { weekStartsOn: 1 })
+  const finGrilla = endOfWeek(endOfMonth(mes), { weekStartsOn: 1 })
+  const dias = eachDayOfInterval({ start: inicioGrilla, end: finGrilla })
+
+  // Los cobros de los abonos aparecen solos, cada mes, con el color y el nombre de cada cliente.
+  const eventos = useMemo(() => [...(datos ?? []), ...cobrosComoEventos(abonos ?? [], inicioGrilla, finGrilla)], [datos, abonos, mes])
+  const colorDe = (e: EventoCalendario) => colorDeEvento(e, abonos ?? [])
   const porDia = useMemo(() => {
     const mapa = new Map<string, EventoCalendario[]>()
     for (const e of eventos) {
@@ -60,8 +69,6 @@ export function CalendarioPage() {
     return mapa
   }, [eventos])
   const eventosDe = (d: Date) => porDia.get(format(d, 'yyyy-MM-dd')) ?? []
-
-  const dias = eachDayOfInterval({ start: startOfWeek(startOfMonth(mes), { weekStartsOn: 1 }), end: endOfWeek(endOfMonth(mes), { weekStartsOn: 1 }) })
 
   function irA(nuevo: Date, dir: number) {
     setDireccion(dir)
@@ -81,7 +88,7 @@ export function CalendarioPage() {
       <PageHeader
         titulo="Calendario"
         icono={<CalendarDays />}
-        subtitulo="Tareas, colaboraciones y eventos del equipo"
+        subtitulo="Tareas, colaboraciones, cobros de abonos y eventos del equipo"
         acciones={<PrimaryAction etiqueta="Nuevo evento" onClick={() => dialogo.abrir({ fecha: seleccionado })} />}
       />
 
@@ -158,7 +165,7 @@ export function CalendarioPage() {
                     </span>
                     <span className="relative hidden flex-col gap-0.5 sm:flex">
                       {evs.slice(0, 2).map((e) => (
-                        <span key={e.id} className={cn('truncate rounded-md px-1.5 py-0.5 text-[11px] font-semibold leading-tight', estilos[tipoDe(e)].pastilla)}>
+                        <span key={e.id} style={estiloPastilla(colorDe(e))} className="truncate rounded-md px-1.5 py-0.5 text-[11px] font-semibold leading-tight">
                           {e.titulo}
                         </span>
                       ))}
@@ -167,7 +174,7 @@ export function CalendarioPage() {
                     {evs.length > 0 && (
                       <span className="relative mt-auto flex gap-0.5 sm:hidden">
                         {evs.slice(0, 4).map((e) => (
-                          <span key={e.id} className={cn('size-1.5 rounded-full', estilos[tipoDe(e)].barra)} />
+                          <span key={e.id} style={estiloPunto(colorDe(e))} className="size-1.5 rounded-full" />
                         ))}
                       </span>
                     )}
@@ -180,8 +187,8 @@ export function CalendarioPage() {
           <div className="flex flex-wrap gap-4 px-5 py-3 text-xs font-medium text-muted">
             {tiposEvento.map((t) => (
               <span key={t} className="flex items-center gap-1.5">
-                <span className={cn('size-2.5 rounded-full', estilos[t].barra)} />
-                {estilos[t].plural}
+                <span style={estiloPunto(coloresTipo[t])} className="size-2.5 rounded-full" />
+                {pluralTipoEvento[t]}
               </span>
             ))}
           </div>
@@ -189,7 +196,7 @@ export function CalendarioPage() {
 
         {esEscritorio && (
           <div className="sticky top-8">
-            <PanelDia fecha={seleccionado} eventos={eventosSeleccionado} onNuevo={() => dialogo.abrir({ fecha: seleccionado })} onEditar={(e) => dialogo.abrir({ evento: e, fecha: e.fecha })} />
+            <PanelDia fecha={seleccionado} eventos={eventosSeleccionado} colorDe={colorDe} abonos={abonos ?? []} onNuevo={() => dialogo.abrir({ fecha: seleccionado })} onEditar={(e) => dialogo.abrir({ evento: e, fecha: e.fecha })} />
           </div>
         )}
       </div>
@@ -200,6 +207,8 @@ export function CalendarioPage() {
             <PanelDia
               fecha={seleccionado}
               eventos={eventosSeleccionado}
+              colorDe={colorDe}
+              abonos={abonos ?? []}
               sinMarco
               onNuevo={() => {
                 setDetalleAbierto(false)
@@ -222,14 +231,40 @@ export function CalendarioPage() {
 interface PropsPanel {
   fecha: Date
   eventos: EventoCalendario[]
+  colorDe: (e: EventoCalendario) => ColorEvento
+  abonos: Abono[]
   onNuevo: () => void
   onEditar: (e: EventoCalendario) => void
   sinMarco?: boolean
 }
 
-function PanelDia({ fecha, eventos, onNuevo, onEditar, sinMarco }: PropsPanel) {
+function PanelDia({ fecha, eventos, colorDe, abonos, onNuevo, onEditar, sinMarco }: PropsPanel) {
   const confirmar = useConfirmar()
   const toast = useToast()
+
+  /** Los cobros de abonos no se editan acá: se marca el mes como pagado (o no) desde el mismo evento. */
+  function itemsDe(e: EventoCalendario) {
+    if (!esCobroDeAbono(e)) {
+      return [
+        { etiqueta: 'Editar', icono: <Pencil />, onClick: () => onEditar(e) },
+        { etiqueta: 'Eliminar', icono: <Trash2 />, peligro: true, onClick: () => void borrar(e) },
+      ]
+    }
+    const abono = abonos.find((a) => a.id === e.abonoId)
+    if (!abono) return []
+    const mes = new Date(e.fecha.getFullYear(), e.fecha.getMonth(), 1)
+    const pagado = e.titulo.startsWith('✓')
+    return [
+      {
+        etiqueta: pagado ? 'Desmarcar como pagado' : 'Marcar como pagado',
+        icono: pagado ? <Undo2 /> : <CheckCircle2 />,
+        onClick: () => {
+          void marcarMesAbono(abono, mes, !pagado)
+          toast.exito(pagado ? 'Cobro desmarcado' : 'Cobro marcado como pagado')
+        },
+      },
+    ]
+  }
 
   async function borrar(e: EventoCalendario) {
     if (await confirmar({ titulo: `¿Eliminar "${e.titulo}"?` })) {
@@ -252,7 +287,7 @@ function PanelDia({ fecha, eventos, onNuevo, onEditar, sinMarco }: PropsPanel) {
       <div className="space-y-2.5">
         <AnimatePresence mode="popLayout" initial={false}>
           {eventos.map((e) => {
-            const estilo = estilos[tipoDe(e)]
+            const color = colorDe(e)
             return (
               <motion.div
                 key={e.id}
@@ -263,18 +298,15 @@ function PanelDia({ fecha, eventos, onNuevo, onEditar, sinMarco }: PropsPanel) {
                 transition={{ type: 'spring', stiffness: 400, damping: 32 }}
                 className="relative flex items-start gap-3 overflow-hidden rounded-2xl border border-line bg-surface2/60 py-3 pl-5 pr-2"
               >
-                <span className={cn('absolute inset-y-0 left-0 w-1.5', estilo.barra)} />
+                <span style={estiloPunto(color)} className="absolute inset-y-0 left-0 w-1.5" />
                 <div className="min-w-0 flex-1">
-                  <span className={cn('mb-1.5 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-none', estilo.insignia)}>{etiquetaTipoEvento[tipoDe(e)]}</span>
+                  <span style={estiloPastilla(color)} className="mb-1.5 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-none">
+                    {etiquetaTipoEvento[tipoDe(e)]}
+                  </span>
                   <p className="text-sm font-bold leading-snug text-ink">{e.titulo}</p>
                   {e.descripcion && <p className="mt-0.5 text-[13px] text-muted">{e.descripcion}</p>}
                 </div>
-                <Menu
-                  items={[
-                    { etiqueta: 'Editar', icono: <Pencil />, onClick: () => onEditar(e) },
-                    { etiqueta: 'Eliminar', icono: <Trash2 />, peligro: true, onClick: () => void borrar(e) },
-                  ]}
-                />
+                <Menu items={itemsDe(e)} />
               </motion.div>
             )
           })}
@@ -348,12 +380,10 @@ function Formulario({ dialogo }: { dialogo: Dialogo<{ evento?: EventoCalendario;
                 aria-checked={activo}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setTipo(t)}
-                className={cn(
-                  'flex h-10 items-center gap-2 rounded-xl border px-3 text-[13px] font-semibold transition-colors',
-                  activo ? cn(estilos[t].ficha, 'shadow-sm') : 'border-line bg-surface text-muted hover:text-ink',
-                )}
+                style={activo ? estiloFicha(coloresTipo[t]) : undefined}
+                className={cn('flex h-10 items-center gap-2 rounded-xl border px-3 text-[13px] font-semibold transition-colors', activo ? 'shadow-sm' : 'border-line bg-surface text-muted hover:text-ink')}
               >
-                <span className={cn('size-2.5 shrink-0 rounded-full', activo ? 'bg-white' : estilos[t].barra)} />
+                <span style={activo ? { backgroundColor: coloresTipo[t].sobre } : estiloPunto(coloresTipo[t])} className="size-2.5 shrink-0 rounded-full" />
                 <span className="truncate">{etiquetaTipoEvento[t]}</span>
               </motion.button>
             )

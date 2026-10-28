@@ -36,6 +36,9 @@ export interface EventoCalendario {
   abonoId: string | null
 }
 
+/** Colores a elegir para reconocer a cada abono (ver `coloresAbono`). */
+export type ColorAbono = 'celeste' | 'azul' | 'indigo' | 'violeta' | 'rosa' | 'rojo' | 'naranja' | 'amarillo' | 'lima' | 'verde' | 'gris'
+
 export interface Abono {
   id: string
   nombreCliente: string
@@ -49,6 +52,8 @@ export interface Abono {
   activo: boolean
   /** Meses ya cobrados, con formato "2026-10". */
   mesesPagados: string[]
+  /** Color con el que se ve en el calendario; sin elegir, celeste. */
+  color: ColorAbono | null
 }
 
 export type FrecuenciaTarea = 'semanal' | 'mensual'

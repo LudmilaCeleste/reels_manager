@@ -1,6 +1,6 @@
 import { backend } from '../data/backend'
 import { COLECCION, deAbono } from '../data/mappers'
-import { ErrorDeValidacion, type Abono } from '../domain/types'
+import { ErrorDeValidacion, type Abono, type ColorAbono } from '../domain/types'
 import { claveMes } from '../lib/dates'
 import { nuevoId } from '../lib/ids'
 import { normalizarUsuarioInstagram } from '../lib/instagram'
@@ -12,6 +12,7 @@ export interface DatosAbono {
   montoMensual: number
   diaCobro: number
   desde: Date
+  color: ColorAbono | null
 }
 
 /** Crea un abono o edita uno existente (conserva su historial de pagos y si está activo). */
@@ -35,6 +36,7 @@ export async function guardarAbono(datos: DatosAbono, existente?: Abono): Promis
       desde: new Date(datos.desde.getFullYear(), datos.desde.getMonth(), 1),
       activo: existente?.activo ?? true,
       mesesPagados: existente?.mesesPagados ?? [],
+      color: datos.color,
     }),
   )
 }

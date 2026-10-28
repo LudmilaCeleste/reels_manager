@@ -1,6 +1,9 @@
-import { DollarSign } from 'lucide-react'
+import { Check, DollarSign } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useState } from 'react'
-import { ErrorDeValidacion, type Abono } from '../../domain/types'
+import { coloresAbono, colorAbonoPorDefecto } from '../../domain/colores'
+import { ErrorDeValidacion, type Abono, type ColorAbono } from '../../domain/types'
+import { cn } from '../../lib/cn'
 import { aInputMes, desdeInputMes, etiquetaMes } from '../../lib/dates'
 import { parsearMonto } from '../../lib/money'
 import { guardarAbono } from '../../services/abonos'
@@ -21,6 +24,7 @@ function Formulario({ dialogo }: { dialogo: Dialogo<Abono> }) {
   const [dia, setDia] = useState(String(existente?.diaCobro ?? 1))
   const [desde, setDesde] = useState(aInputMes(existente?.desde ?? new Date()))
   const [descripcion, setDescripcion] = useState(existente?.descripcion ?? '')
+  const [color, setColor] = useState<ColorAbono>(existente?.color ?? colorAbonoPorDefecto)
 
   async function guardar() {
     const importe = parsearMonto(monto)
@@ -30,7 +34,7 @@ function Formulario({ dialogo }: { dialogo: Dialogo<Abono> }) {
     const fechaDesde = desdeInputMes(desde)
     if (!fechaDesde) throw new ErrorDeValidacion('Elegí desde qué mes se cobra')
 
-    await guardarAbono({ nombreCliente: nombre, instagramCliente: instagram, descripcion, montoMensual: importe, diaCobro: diaNumero, desde: fechaDesde }, existente)
+    await guardarAbono({ nombreCliente: nombre, instagramCliente: instagram, descripcion, montoMensual: importe, diaCobro: diaNumero, desde: fechaDesde, color }, existente)
   }
 
   const fechaDesde = desdeInputMes(desde)
@@ -69,6 +73,32 @@ function Formulario({ dialogo }: { dialogo: Dialogo<Abono> }) {
       <Campo etiqueta="Cobra desde" ayuda={fechaDesde ? `Empieza a contar desde ${etiquetaMes(fechaDesde)}.` : undefined}>
         {(id) => <Input id={id} type="month" value={desde} onChange={(e) => setDesde(e.target.value)} />}
       </Campo>
+
+      <div>
+        <p id="color-abono" className="mb-1.5 text-[13px] font-semibold text-ink">
+          Color
+        </p>
+        <div role="radiogroup" aria-labelledby="color-abono" className="flex flex-wrap gap-2.5">
+          {coloresAbono.map((c) => (
+            <motion.button
+              key={c.clave}
+              type="button"
+              role="radio"
+              aria-checked={color === c.clave}
+              aria-label={c.nombre}
+              title={c.nombre}
+              whileTap={{ scale: 0.88 }}
+              whileHover={{ scale: 1.1 }}
+              onClick={() => setColor(c.clave)}
+              style={{ backgroundColor: c.hex }}
+              className={cn('grid size-8 place-items-center rounded-full text-white transition-shadow', color === c.clave ? 'ring-2 ring-ink ring-offset-2 ring-offset-surface' : 'ring-0')}
+            >
+              {color === c.clave && <Check className="size-4" strokeWidth={3} />}
+            </motion.button>
+          ))}
+        </div>
+        <p className="mt-1.5 text-xs text-muted">Con este color se ve en el calendario, así reconocés de qué cliente es cada cobro.</p>
+      </div>
 
       <Campo etiqueta="Qué incluye" opcional>
         {(id) => <Textarea id={id} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={2} className="min-h-[4.5rem]" placeholder="Ej: 12 videos al mes + gestión de redes" />}

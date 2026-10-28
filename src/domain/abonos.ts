@@ -1,5 +1,6 @@
 import { claveMes } from '../lib/dates'
-import type { Abono } from './types'
+import { formatearPrecio } from '../lib/money'
+import type { Abono, EventoCalendario } from './types'
 
 export const estaPagadoEn = (abono: Abono, mes: Date): boolean => abono.mesesPagados.includes(claveMes(mes))
 
@@ -81,4 +82,44 @@ export function calcularTotalesAbonos(abonos: Abono[], hoy: Date): TotalesAbonos
     cantidadActivos,
     pendienteTotal: pendienteMes + pendienteAnterior,
   }
+}
+
+/** Los eventos del calendario que se crean solos por cada cobro de abono tienen este prefijo en el id. */
+export const prefijoIdCobro = 'cobro-abono-'
+export const esCobroDeAbono = (e: { id: string }): boolean => e.id.startsWith(prefijoIdCobro)
+
+/**
+ * Los cobros de los abonos activos como eventos del calendario, para los días
+ * entre `desde` y `hasta` (inclusive): cada mes, el día de cobro del abono
+ * (en los meses cortos, el último día). Aparecen solos, con el nombre del
+ * cliente; si el mes ya está pagado el título empieza con "✓".
+ */
+export function cobrosComoEventos(abonos: Abono[], desde: Date, hasta: Date): EventoCalendario[] {
+  const inicio = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate()).getTime()
+  const fin = new Date(hasta.getFullYear(), hasta.getMonth(), hasta.getDate()).getTime()
+  const eventos: EventoCalendario[] = []
+
+  for (const abono of abonos) {
+    if (!abono.activo) continue
+    const primerMes = new Date(abono.desde.getFullYear(), abono.desde.getMonth(), 1).getTime()
+
+    let mes = new Date(desde.getFullYear(), desde.getMonth(), 1)
+    while (mes.getTime() <= fin) {
+      const diasDelMes = new Date(mes.getFullYear(), mes.getMonth() + 1, 0).getDate()
+      const fecha = new Date(mes.getFullYear(), mes.getMonth(), Math.min(abono.diaCobro, diasDelMes))
+      if (mes.getTime() >= primerMes && fecha.getTime() >= inicio && fecha.getTime() <= fin) {
+        eventos.push({
+          id: `${prefijoIdCobro}${abono.id}-${claveMes(mes)}`,
+          titulo: `${estaPagadoEn(abono, mes) ? '✓ ' : ''}${abono.nombreCliente}`,
+          fecha,
+          descripcion: `Cobro del abono mensual · ${formatearPrecio(abono.montoMensual)}`,
+          colaboracionId: null,
+          tipo: 'abono',
+          abonoId: abono.id,
+        })
+      }
+      mes = new Date(mes.getFullYear(), mes.getMonth() + 1, 1)
+    }
+  }
+  return eventos
 }

@@ -2,6 +2,7 @@ import type {
   Abono,
   CategoriaReel,
   Colaboracion,
+  ColorAbono,
   Consulta,
   CuentaInstagram,
   EstadoColaboracion,
@@ -15,6 +16,7 @@ import type {
   Tarea,
   TipoEvento,
 } from '../domain/types'
+import { coloresAbono } from '../domain/colores'
 import { tiposEvento } from '../domain/eventos'
 import type { Datos, Doc } from './backend'
 
@@ -84,6 +86,7 @@ export const aAbono = ({ id, data: d }: Doc): Abono => ({
   desde: fecha(d.desde) ?? new Date(),
   activo: booleano(d.activo, true),
   mesesPagados: lista(d.mesesPagados).filter((m): m is string => typeof m === 'string'),
+  color: coloresAbono.some((c) => c.clave === d.color) ? (d.color as ColorAbono) : null,
 })
 export const deAbono = (a: Omit<Abono, 'id'>): Datos => ({ ...a })
 

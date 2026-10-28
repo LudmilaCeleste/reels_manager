@@ -9,6 +9,7 @@ import { linkMensajeInstagram } from '../../lib/instagram'
 import { formatearPrecio } from '../../lib/money'
 import { cambiarActivoAbono, eliminarAbono, marcarMesAbono } from '../../services/abonos'
 import { Badge, type TonoBadge } from '../../ui/Badge'
+import { colorDeAbono, estiloFranja, estiloTexto } from '../../ui/estilosEvento'
 import { Button } from '../../ui/Button'
 import { Card } from '../../ui/Card'
 import { useConfirmar } from '../../ui/Confirm'
@@ -71,6 +72,7 @@ function TarjetaAbono({ abono, onEditar, onHistorial }: { abono: Abono; onEditar
   const empezo = abono.desde.getTime() <= mesActual.getTime()
   const pagadoEsteMes = estaPagadoEn(abono, mesActual)
   const adeudados = mesesAdeudados(abono, hoy)
+  const color = colorDeAbono(abono)
 
   let estado: { texto: string; tono: TonoBadge }
   if (!abono.activo) estado = { texto: 'Pausado', tono: 'neutro' }
@@ -92,8 +94,8 @@ function TarjetaAbono({ abono, onEditar, onHistorial }: { abono: Abono; onEditar
 
   return (
     <Card className={abono.activo ? 'relative overflow-hidden p-5' : 'relative overflow-hidden p-5 opacity-70'}>
-      {/* Los abonos mensuales tienen su propio color (celeste) en toda la app. */}
-      <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400 to-sky-600" />
+      {/* Cada abono tiene su color (el que se eligió al cargarlo): es el mismo que se ve en el calendario. */}
+      <span aria-hidden style={estiloFranja(color)} className="absolute inset-x-0 top-0 h-1" />
       <div className="flex items-start gap-3.5">
         <Avatar texto={abono.nombreCliente} className="size-11" />
         <div className="min-w-0 flex-1">
@@ -114,7 +116,7 @@ function TarjetaAbono({ abono, onEditar, onHistorial }: { abono: Abono; onEditar
       </div>
 
       <div className="mt-4 flex items-baseline gap-2">
-        <span className="text-2xl font-extrabold tracking-tight text-sky-600 dark:text-sky-300">{formatearPrecio(abono.montoMensual)}</span>
+        <span className="text-2xl font-extrabold tracking-tight" style={estiloTexto(color)}>{formatearPrecio(abono.montoMensual)}</span>
         <span className="text-sm font-medium text-muted">por mes</span>
       </div>
       <p className="mt-1 flex items-center gap-1.5 text-xs text-faint">

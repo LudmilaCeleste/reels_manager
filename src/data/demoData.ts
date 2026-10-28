@@ -57,6 +57,7 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
         montoMensual: 150000,
         diaCobro: 5,
         desde: mes(-3),
+        color: 'naranja',
         activo: true,
         mesesPagados: [claveMes(mes(-3)), claveMes(mes(-2))],
       },
@@ -70,6 +71,7 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
         montoMensual: 280000,
         diaCobro: 1,
         desde: mes(-4),
+        color: 'indigo',
         activo: true,
         mesesPagados: [mes(-4), mes(-3), mes(-2), mes(-1), mes(0)].map(claveMes),
       },
@@ -83,6 +85,7 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
         montoMensual: 90000,
         diaCobro: 10,
         desde: mes(-2),
+        color: 'verde',
         activo: true,
         mesesPagados: [claveMes(mes(-2)), claveMes(mes(-1))],
       },
@@ -162,9 +165,10 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
     { id: 'colaboracion-c5', data: { titulo: 'Beach Club Marea', descripcion: 'Aftermovie de la fiesta de apertura', fecha: dia(15), colaboracionId: 'c5' } },
     { id: 'colaboracion-c6', data: { titulo: 'Barbería Don Nico', descripcion: 'Reel de transformación + reseñas NFC', fecha: dia(1), colaboracionId: 'c6' } },
     { id: 'tarea-t1', data: { titulo: 'Tarea: Pasar presupuesto a Beach Club Marea', descripcion: 'Beach Club Marea · Incluye drone y 2 días de edición', fecha: dia(2), colaboracionId: null } },
-    { id: 'e1', data: { titulo: 'Reunión de equipo', descripcion: 'Repasar el mes y planificar el siguiente', fecha: dia(2), colaboracionId: null } },
+    { id: 'e1', data: { titulo: 'Reunión de equipo', descripcion: 'Repasar el mes y planificar el siguiente', fecha: dia(2), colaboracionId: null, tipo: 'reunion' } },
     { id: 'e2', data: { titulo: 'Entrega de reels a Hotel Mirador', descripcion: '', fecha: dia(5), colaboracionId: 'c2' } },
-    { id: 'e3', data: { titulo: 'Capacitación de redes', descripcion: 'Webinar de Meta', fecha: dia(11), colaboracionId: null } },
+    { id: 'e3', data: { titulo: 'Capacitación de redes', descripcion: 'Webinar de Meta', fecha: dia(11), colaboracionId: null, tipo: 'evento' } },
+    { id: 'e4', data: { titulo: 'Grabación en Bar Pepe', descripcion: 'Terraza y barra, llevar luz y trípode', fecha: dia(1), colaboracionId: null, tipo: 'grabacion' } },
   ])
 
   b.sembrar(COLECCION.propuestas, [

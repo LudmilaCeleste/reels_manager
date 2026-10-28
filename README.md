@@ -99,9 +99,12 @@ src/
   no avisan. Muestran los días elegidos de las tareas automáticas (por ejemplo lunes,
   miércoles y viernes) y **todo lo del calendario que pasa mañana y hoy**: un día antes y el
   mismo día. Cerrar el aviso lo oculta por hoy; si aparece algo nuevo, vuelve a mostrarse.
-- Cada evento del calendario tiene un **tipo** con su color: colaboración, abono mensual,
-  tarea, reunión, grabación u otro. Los abonos mensuales usan el celeste también en su
-  lista y en Ganancias.
+- Cada evento del calendario tiene un **tipo** con su color: colaboración (rosa), abono
+  mensual, tarea, reunión (negra en modo claro, blanca en oscuro), grabación u otro.
+- Cada **abono mensual tiene el color que se elija** al cargarlo (11 colores, celeste por
+  defecto) para reconocer a cada tienda de un vistazo. Sus cobros aparecen **solos en el
+  calendario**, cada mes en el día de cobro y con el nombre del cliente. Desde el mismo
+  evento se marca como pagado; si falta pagar, avisa un día antes y el mismo día.
 - **Actualización con un clic**: cada publicación deja un `version.json`. La app lo consulta
   al abrir, cada 5 minutos y al volver a la pestaña; si hay una versión nueva muestra
   "Actualizar ahora", que recarga y deja la última versión sin perder nada.

@@ -3,9 +3,9 @@ import { BellRing, X } from 'lucide-react'
 import type { AvisoEvento } from '../../domain/eventos'
 import { etiquetaTipoEvento, tipoDeEvento } from '../../domain/eventos'
 import type { RecordatorioTarea } from '../../domain/tareas'
-import { cn } from '../../lib/cn'
 import { Button, IconButton } from '../../ui/Button'
-import { estilosEvento } from '../../ui/estilosEvento'
+import { useColorDeEvento } from '../../app/hooks'
+import { estiloPastilla } from '../../ui/estilosEvento'
 
 interface Props {
   /** Tareas automáticas a las que hoy les toca recordatorio. */
@@ -23,6 +23,7 @@ interface Props {
  * en el calendario para hoy y para mañana, un día antes y el mismo día.
  */
 export function BannerRecordatorios({ avisos, eventos, onVerTareas, onVerCalendario, onCerrar }: Props) {
+  const colorDe = useColorDeEvento()
   const acciones = (
     <>
       {avisos.length > 0 && (
@@ -59,7 +60,7 @@ export function BannerRecordatorios({ avisos, eventos, onVerTareas, onVerCalenda
               const tipo = tipoDeEvento(evento)
               return (
                 <li key={`${evento.id}-${cuando}`} className="flex items-baseline gap-2 text-sm text-muted">
-                  <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase leading-none tracking-wide', estilosEvento[tipo].insignia)}>
+                  <span style={estiloPastilla(colorDe(evento))} className="shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase leading-none tracking-wide">
                     {cuando === 'hoy' ? 'Hoy' : 'Mañana'}
                   </span>
                   <span className="min-w-0">

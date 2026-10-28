@@ -15,6 +15,7 @@ const abono = (p: Partial<Abono> = {}): Abono => ({
   desde: new Date(2026, 9, 1),
   activo: true,
   mesesPagados: [],
+  color: null,
   ...p,
 })
 

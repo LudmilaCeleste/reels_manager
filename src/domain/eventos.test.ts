@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { cobrosComoEventos, esCobroDeAbono } from './abonos'
+import { hexDeAbono } from './colores'
 import { avisosDelCalendario, tipoDeEvento } from './eventos'
-import type { EventoCalendario } from './types'
+import type { Abono, EventoCalendario } from './types'
 
 const evento = (p: Partial<EventoCalendario> = {}): EventoCalendario => ({
   id: 'e',
@@ -70,5 +72,53 @@ describe('avisos del calendario', () => {
 
   it('ignora la hora del día', () => {
     expect(avisosDelCalendario([evento({ fecha: new Date(2026, 9, 28, 23, 30) })], new Date(2026, 9, 28))).toHaveLength(1)
+  })
+})
+
+describe('cobros de abonos en el calendario', () => {
+  const abono = (p: Partial<Abono> = {}): Abono => ({
+    id: 'a1',
+    nombreCliente: 'Estética Aura',
+    instagramCliente: '',
+    descripcion: '',
+    montoMensual: 90000,
+    diaCobro: 10,
+    desde: new Date(2026, 8, 1),
+    activo: true,
+    mesesPagados: [],
+    color: null,
+    ...p,
+  })
+
+  it('aparecen solos el día de cobro de cada mes, con el nombre del cliente', () => {
+    const cobros = cobrosComoEventos([abono()], new Date(2026, 8, 28), new Date(2026, 11, 6))
+    expect(cobros.map((c) => [c.fecha, c.titulo, c.abonoId, c.tipo])).toEqual([
+      [new Date(2026, 9, 10), 'Estética Aura', 'a1', 'abono'],
+      [new Date(2026, 10, 10), 'Estética Aura', 'a1', 'abono'],
+    ])
+    expect(cobros.every(esCobroDeAbono)).toBe(true)
+  })
+
+  it('no hay cobros antes de que empiece el abono ni mientras está pausado', () => {
+    expect(cobrosComoEventos([abono({ desde: new Date(2026, 10, 1) })], new Date(2026, 9, 1), new Date(2026, 9, 31))).toEqual([])
+    expect(cobrosComoEventos([abono({ activo: false })], new Date(2026, 9, 1), new Date(2026, 9, 31))).toEqual([])
+  })
+
+  it('en los meses cortos se cobra el último día', () => {
+    const [febrero] = cobrosComoEventos([abono({ diaCobro: 31, desde: new Date(2026, 0, 1) })], new Date(2027, 1, 1), new Date(2027, 1, 28))
+    expect(febrero.fecha).toEqual(new Date(2027, 1, 28))
+  })
+
+  it('un mes pagado se marca con "✓" y por eso no avisa', () => {
+    const pagado = cobrosComoEventos([abono({ mesesPagados: ['2026-10'] })], new Date(2026, 9, 1), new Date(2026, 9, 31))
+    expect(pagado[0].titulo).toBe('✓ Estética Aura')
+    expect(avisosDelCalendario(pagado, new Date(2026, 9, 10))).toEqual([])
+    const pendiente = cobrosComoEventos([abono()], new Date(2026, 9, 1), new Date(2026, 9, 31))
+    expect(avisosDelCalendario(pendiente, new Date(2026, 9, 9)).map((a) => a.cuando)).toEqual(['manana'])
+  })
+
+  it('el color de un abono es el elegido, o celeste si no eligió', () => {
+    expect(hexDeAbono({ color: 'naranja' })).toBe('#f97316')
+    expect(hexDeAbono({ color: null })).toBe('#0ea5e9')
   })
 })
