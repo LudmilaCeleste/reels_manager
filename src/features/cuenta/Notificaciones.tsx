@@ -11,8 +11,8 @@ const textos: Record<EstadoNotificaciones, string> = {
   'no-soportado': 'Este navegador no puede recibir notificaciones. Probá desde Chrome, Edge o Safari (en el iPhone, con la app agregada a la pantalla de inicio).',
   'instalar-primero': 'En el iPhone las notificaciones funcionan solo con la app instalada: tocá "Compartir" → "Agregar a pantalla de inicio", abrila desde ahí y activalas en esta pantalla.',
   bloqueadas: 'Las notificaciones están bloqueadas para esta app. Habilitalas en los ajustes del navegador o del teléfono y volvé a intentar.',
-  desactivadas: 'Activalas y todas las mañanas te llega un resumen: lo del calendario de hoy y de mañana, cobros de abonos, recordatorios de tareas y consultas sin responder.',
-  activadas: 'Este dispositivo recibe el resumen del día todas las mañanas (alrededor de las 9). Si no hay nada que avisar, no manda nada.',
+  desactivadas: 'Activalas y el mismo día en que vence una tarea te llega un aviso a la mañana para que no se te pase.',
+  activadas: 'Este dispositivo recibe un aviso a la mañana (alrededor de las 9) los días en que vence alguna tarea. Si no hay ninguna, no manda nada.',
 }
 
 /** Tarjeta de Cuenta para activar las notificaciones en este dispositivo. */

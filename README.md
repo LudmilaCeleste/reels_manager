@@ -116,10 +116,13 @@ solo funcionan con la app agregada a la pantalla de inicio (iOS 16.4 o más nuev
 
 Todas las mañanas (≈ 9:00 de Argentina) un programa de GitHub Actions
 ([`.github/workflows/avisos.yml`](.github/workflows/avisos.yml), código en
-[`scripts/enviar-avisos.ts`](scripts/enviar-avisos.ts)) manda un resumen: lo del calendario de
-hoy y mañana, cobros de abonos sin pagar, recordatorios de tareas automáticas, tareas para hoy
-o vencidas y consultas sin responder. Si no hay nada, no manda nada. Usa la misma lógica que el
-aviso de arriba de la app (`src/domain/avisosDiarios.ts`).
+[`scripts/enviar-avisos.ts`](scripts/enviar-avisos.ts)) revisa las tareas: **si alguna vence ese mismo día,
+manda un aviso** ("Hoy tenés 2 tareas para hacer", con la lista). Si no hay ninguna, no manda nada.
+
+Qué se avisa se decide en `avisosActivos` de `src/domain/avisosDiarios.ts`. Por ahora solo
+`tareasDeHoy`; ya están programados y listos para prender el calendario de hoy y mañana (con los
+cobros de abonos sin pagar), los recordatorios de tareas automáticas, las tareas vencidas y las
+consultas sin responder.
 
 **Configuración (una sola vez)** en GitHub → Settings → Secrets and variables → Actions →
 *New repository secret*:
