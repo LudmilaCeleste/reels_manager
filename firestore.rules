@@ -6,12 +6,11 @@ rules_version = '2';
 // proyecto de OAuth esté en modo "producción" (sin filtro de test
 // users) en Google Cloud Console.
 //
-// Mantener la lista de abajo sincronizada con
-// lib/core/config/equipo_autorizado.dart (ver el comentario ahí para
-// los tres lugares que hay que tocar si se agrega o saca a alguien).
+// Mantener la lista de abajo sincronizada con `correosEquipoAutorizado`
+// en src/config.ts (si se agrega o saca a alguien hay que tocar los dos).
 //
-// Cómo aplicarlas: Firebase Console -> Firestore Database -> pestaña
-// "Rules" -> pegar este contenido -> Publish.
+// Cómo aplicarlas: `npm run desplegar:reglas`, o a mano en Firebase
+// Console -> Firestore Database -> pestaña "Rules" -> pegar -> Publish.
 service cloud.firestore {
   match /databases/{database}/documents {
     function esUsuarioDelEquipo() {

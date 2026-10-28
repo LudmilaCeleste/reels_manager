@@ -1,42 +1,99 @@
-# AceMedia Marketing (`reels_manager`)
+# AceMedia Marketing
 
-App interna de la agencia: reels de Instagram con reproducción desde el link, colaboraciones puntuales y **abonos mensuales** (con historial de pagos por mes), ganancias (cobrado / pendiente), **tareas** (incluidas las **automáticas** que se generan solas cada semana o mes, con opción de ir al calendario), calendario del equipo, cuentas de Instagram, propuestas, notas y consultas de la web.
+App interna de la agencia, hecha como aplicación web: reels de Instagram, colaboraciones
+puntuales y **abonos mensuales**, ganancias (cobrado / pendiente), **tareas** (con
+automáticas semanales o mensuales y recordatorios), calendario del equipo, cuentas de
+Instagram, propuestas, consultas de la web y notas. Funciona en la compu y en el celular.
 
-El nombre que se ve en la app se define en `lib/core/config/nombre_app.dart`. El paquete, el `.exe` y el `.zip` de los releases se siguen llamando `reels_manager` a propósito: la autoactualización de las copias ya instaladas depende de esos nombres.
+Antes era una app de escritorio en Flutter. Ese código quedó archivado en la etiqueta
+[`flutter-v0.11.0`](../../tree/flutter-v0.11.0) y usa **la misma base de datos de Firebase**
+(mismas colecciones), así que no se perdió ningún dato.
 
-Ver [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) para la arquitectura, el stack elegido y el plan por etapas.
+## Cómo probarla
 
-## Estado actual: v0.5 — CRUD completo y Colaboraciones con los datos del cliente
+Hace falta [Node.js](https://nodejs.org) 20 o más nuevo. Los comandos se corren **desde la
+carpeta del repo** (donde está `package.json`).
 
-Reels, Colaboraciones y Calendario leen y escriben en Cloud Firestore, en tiempo real y compartido por todo el equipo (lo que carga una persona lo ve el resto al instante, no hace falta avisar por otro lado). El login es con Google.
+```bash
+npm install
+npm run dev
+```
 
-Ya no existe una sección "Clientes" separada: el nombre, Instagram y notas del cliente viven directamente en cada Colaboración (cada colaboración ES el registro del cliente). Reels y Calendario referencian a un cliente eligiendo la colaboración correspondiente. Todas las secciones tienen alta, edición y borrado (con confirmación).
+Se abre en <http://localhost:5173>.
 
-Identidad visual: color de marca verde agua (`colorMarca` en `lib/core/theme/app_theme.dart`), con el resto de la paleta generada a partir de ese color siguiendo Material 3 — para cambiarlo alcanza con tocar esa única constante.
+### Modo demo (sin login ni Firebase)
 
-### Configuración de Firebase (una sola vez)
+Para ver el diseño sin tocar datos reales, abrí <http://localhost:5173/?demo>.
 
-1. Firebase Console → **Authentication** → **Sign-in method** → habilitar **Google**.
-2. Crear el cliente OAuth de escritorio en [Google Cloud Console](https://console.cloud.google.com/apis/credentials): tipo **Aplicación de escritorio**, pantalla de consentimiento en modo Testing con los emails del equipo como test users. Copiar el Client ID **y** el Client Secret (aunque Google dice que los clientes de escritorio no lo necesitan, en la práctica el endpoint de token lo pide igual).
-3. Pegar ambos en `lib/features/auth/data/google_oauth_escritorio.dart` (`clientIdGoogleEscritorio` y `_clientSecretGoogleEscritorio`).
-4. Agregar el Client ID también en Firebase Console → Authentication → Sign-in method → Google → "Web SDK configuration" → "Authorized client IDs".
-5. Publicar las reglas de Firestore: Firebase Console → **Firestore Database** → pestaña **Rules** → pegar el contenido de [`firestore.rules`](firestore.rules) → Publish.
+Carga datos de ejemplo en memoria. Todo se puede crear, editar y borrar, pero se pierde al
+recargar y **no se manda nada a Firebase**. El menú lateral muestra "Modo demo".
 
-### Quién puede entrar
+### Con los datos reales
 
-El acceso está restringido a una lista fija de emails (solo agus y Cele por ahora), en dos capas independientes:
+Sin `?demo`, la app pide iniciar sesión con Google y lee/escribe en Firestore. Solo entran
+los correos de `correosEquipoAutorizado` en [`src/config.ts`](src/config.ts), y las reglas de
+[`firestore.rules`](firestore.rules) protegen los datos del lado del servidor. Si se suma o
+saca a alguien hay que cambiar **los dos** lugares.
 
-- **Google Cloud Console** (Google Auth Platform → Público): con el proyecto en modo "Prueba" y esos emails cargados como test users, nadie más puede ni siquiera completar el login de Google.
-- **La app misma** (`lib/core/config/equipo_autorizado.dart` + `firestore.rules`): aunque el proyecto de Google esté en producción sin ese filtro, la app rechaza y desloguea a cualquier cuenta que no esté en esa lista, y Firestore también la rechaza a nivel de datos.
+## Publicarla (Firebase Hosting)
 
-Para agregar a alguien al equipo hay que tocar los tres lugares: la lista en Google Cloud Console, la constante `correosEquipoAutorizado` en el código, y la función `esUsuarioDelEquipo()` en `firestore.rules` (y volver a publicar las reglas).
+Una sola vez, en tu compu:
 
-### Correr la app
+```bash
+npm install -g firebase-tools
+firebase login
+```
 
-`flutter pub get` y después Run desde Android Studio (o `flutter run -d windows`). Va a pedir iniciar sesión con Google antes de mostrar las secciones.
+Después, cada vez que quieras publicar una versión nueva:
 
-**Windows necesita, además de Flutter y Visual Studio con "Desktop development with C++":** la herramienta `nuget` en el PATH (la pide el plugin del reproductor de video) — instalación: `winget install Microsoft.NuGet`.
+```bash
+npm run desplegar
+```
 
----
+Eso compila y sube `dist/` al proyecto `app-marketing-aguscele`. La web queda en
+`https://app-marketing-aguscele.web.app` (y `.firebaseapp.com`). Es siempre la última
+versión: nadie tiene que instalar ni actualizar nada.
 
-Cada feature sigue separada en capas `domain/` `data/` `presentation/` — ver `docs/ARCHITECTURE.md` sección 3.
+Para que el login con Google funcione en esa dirección tiene que estar el proveedor
+**Google** habilitado en Firebase → Authentication, y el dominio en **Settings → Authorized
+domains** (los dominios `.web.app` y `.firebaseapp.com` del proyecto ya vienen autorizados).
+
+Las reglas de Firestore se publican aparte con `npm run desplegar:reglas`.
+
+## Comandos
+
+| Comando                   | Qué hace                                              |
+| ------------------------- | ----------------------------------------------------- |
+| `npm run dev`             | Servidor de desarrollo con recarga instantánea        |
+| `npm run build`           | Revisa los tipos y genera la versión final en `dist/` |
+| `npm run preview`         | Sirve `dist/` para probar la versión final            |
+| `npm test`                | Corre las pruebas de la lógica de negocio             |
+| `npm run typecheck`       | Solo revisa los tipos de TypeScript                   |
+| `npm run desplegar`       | Compila y publica la web en Firebase Hosting          |
+| `npm run desplegar:reglas`| Publica las reglas de Firestore                       |
+
+## Cómo está armada
+
+```
+src/
+  domain/     Reglas de negocio puras (abonos, ganancias, tareas automáticas, consultas)
+  data/       Acceso a datos: interfaz Backend, Firestore, memoria (demo) y hooks en tiempo real
+  services/   Operaciones que escriben datos (guardar, marcar pagado, generar tareas...)
+  features/   Una carpeta por sección: reels, colaboraciones, abonos, ganancias, tareas,
+              calendario, cuentas, propuestas, consultas, notas, cuenta
+  ui/         Componentes visuales reutilizables (botones, modales, pestañas, toasts...)
+  app/        Menú lateral, barra de abajo en el celular, rutas
+  auth/       Login con Google y lista de correos autorizados
+  lib/        Utilidades (fechas, dinero, links de Instagram...)
+```
+
+- **React 19 + TypeScript**, **Vite**, **Tailwind CSS v4**, **framer-motion** (animaciones),
+  **lucide-react** (íconos), **date-fns** (fechas en español, semana desde el lunes).
+- La lógica de negocio está cubierta por pruebas (`npm test`): abonos mensuales y meses
+  adeudados, ganancias cobradas/pendientes, tareas automáticas sin duplicados,
+  recordatorios y consultas.
+- Cada sección se descarga recién cuando se entra, y Firebase, React y las animaciones van
+  en archivos separados para que el navegador los guarde.
+- Los datos se actualizan solos en tiempo real, sin botón de refrescar.
+- Los recordatorios de lunes, miércoles y viernes son **dentro de la app** (aviso arriba).
+  Si la pestaña está cerrada no avisa.
