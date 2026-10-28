@@ -60,7 +60,7 @@ export function PrimaryAction({ etiqueta, onClick }: PropsAccion) {
         animate={{ scale: 1, rotate: 0 }}
         whileTap={{ scale: 0.9 }}
         transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-        className="fixed bottom-[88px] right-5 z-30 grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 text-white shadow-[0_14px_30px_-10px_rgb(20_146_138/0.9)] lg:hidden"
+        className="fixed bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+6rem)] right-5 z-30 grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 text-white shadow-[0_14px_30px_-10px_rgb(20_146_138/0.9)] lg:hidden"
       >
         <Plus className="size-7" />
       </motion.button>

@@ -108,7 +108,7 @@ export function Shell() {
           <ThemeToggle />
         </header>
 
-        <main className="px-4 pb-32 pt-6 sm:px-8 lg:pb-14 lg:pt-10">
+        <main className="px-4 pb-44 pt-6 sm:px-8 lg:pb-14 lg:pt-10">
           <div className={cn('mx-auto', enCalendario ? 'max-w-[120rem]' : 'max-w-6xl')}>
             <AnimatePresence initial={false}>
               {mostrarAvisos && (
@@ -145,7 +145,7 @@ export function Shell() {
       </div>
 
       {/* ---- Barra de abajo (celular) ---- */}
-      <nav aria-label="Secciones principales" className="fixed inset-x-3 bottom-3 z-30 lg:hidden">
+      <nav aria-label="Secciones principales" className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 lg:hidden">
         <div className="flex items-stretch rounded-[22px] border border-line bg-surface/92 p-1.5 shadow-pop backdrop-blur-xl">
           {principales.map((item) => (
             <PestanaMovil key={item.ruta} item={item} cantidad={item.badge ? conteos[item.badge] : 0} />
