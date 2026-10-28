@@ -71,8 +71,8 @@ export function CalendarioPage() {
   }
 
   const eventosSeleccionado = eventosDe(seleccionado)
-  // Cuántos eventos se ven dentro de cada celda; el resto queda como "+N más" y se ve al tocar el día.
-  const visibles = 2
+  // Cuántos eventos se ven dentro de cada celda (la fila crece para que entren); el resto queda como "+N más" y se ve al tocar el día.
+  const visibles = 3
 
   return (
     <>
@@ -84,7 +84,7 @@ export function CalendarioPage() {
       />
 
       <div>
-        <Card className="overflow-hidden lg:flex lg:h-[calc(100dvh-15rem)] lg:min-h-[34rem] lg:flex-col">
+        <Card className="overflow-hidden lg:flex lg:min-h-[max(28rem,calc(100dvh-15rem))] lg:flex-col">
           <div className="flex items-center gap-2 border-b border-line px-4 py-3.5 sm:px-5">
             <div className="relative h-8 min-w-0 flex-1 overflow-hidden">
               <AnimatePresence mode="popLayout" custom={direccion} initial={false}>
@@ -127,7 +127,7 @@ export function CalendarioPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: direccion * -36 }}
               transition={{ duration: 0.24, ease: 'easeOut' }}
-              className="grid grid-cols-7 lg:min-h-0 lg:flex-1 lg:[grid-auto-rows:minmax(0,1fr)]"
+              className="grid grid-cols-7 lg:flex-1 lg:[grid-auto-rows:minmax(min-content,1fr)]"
             >
               {dias.map((d) => {
                 const delMes = isSameMonth(d, mes)
@@ -141,7 +141,7 @@ export function CalendarioPage() {
                     aria-label={`${fechaLarga(d)}${evs.length ? `, ${evs.length} ${evs.length === 1 ? 'evento' : 'eventos'}` : ''}`}
                     aria-pressed={esSel}
                     className={cn(
-                      'relative flex min-h-[4.6rem] flex-col items-stretch gap-1 overflow-hidden border-b border-r border-line/70 p-1.5 text-left transition-colors hover:bg-brand-500/6 sm:min-h-[6.2rem] sm:p-2 lg:min-h-0 lg:p-2.5',
+                      'relative flex min-h-[4.6rem] flex-col items-stretch gap-1 border-b border-r border-line/70 p-1.5 text-left transition-colors hover:bg-brand-500/6 sm:min-h-[6.2rem] sm:p-2 lg:min-h-[6.5rem] lg:p-2.5',
                       !delMes && 'bg-surface2/40',
                     )}
                   >

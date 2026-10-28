@@ -62,7 +62,7 @@ export function Shell() {
   return (
     <div className="min-h-dvh">
       {/* ---- Menú lateral (pantallas grandes) ---- */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[17.5rem] p-4 lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 p-4 lg:block xl:w-[17.5rem]">
         <div className="flex h-full flex-col rounded-3xl border border-line bg-surface/85 shadow-soft backdrop-blur-xl">
           <div className="flex items-center gap-3 px-5 pb-3 pt-5">
             <Logo />
@@ -97,7 +97,7 @@ export function Shell() {
         </div>
       </aside>
 
-      <div className="lg:pl-[17.5rem]">
+      <div className="lg:pl-60 xl:pl-[17.5rem]">
         {/* ---- Barra de arriba (celular) ---- */}
         <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-canvas/80 px-4 py-3 backdrop-blur-xl lg:hidden">
           <Logo className="size-9 rounded-xl text-sm" />
