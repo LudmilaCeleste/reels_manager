@@ -47,8 +47,9 @@ export const aReel = ({ id, data: d }: Doc): Reel => ({
   id,
   urlInstagram: texto(d.urlInstagram),
   descripcion: texto(d.descripcion),
-  categoria: elegir<CategoriaReel>(d.categoria, ['ejemplo', 'colaboracion'], 'ejemplo'),
+  categoria: elegir<CategoriaReel>(d.categoria, ['ejemplo', 'colaboracion', 'abono'], 'ejemplo'),
   colaboracionId: textoONulo(d.colaboracionId),
+  abonoId: textoONulo(d.abonoId),
 })
 export const deReel = (r: Omit<Reel, 'id'>): Datos => ({ ...r })
 

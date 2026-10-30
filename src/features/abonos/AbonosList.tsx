@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, CalendarClock, CheckCircle2, ClipboardCheck, MessageCircle, Pause, Pencil, Play, Repeat, Trash2, Undo2 } from 'lucide-react'
-import { useAbonos } from '../../data/useData'
+import { AlertTriangle, CalendarClock, CheckCircle2, Clapperboard, ClipboardCheck, MessageCircle, Pause, Pencil, Play, Repeat, Trash2, Undo2 } from 'lucide-react'
+import { useAbonos, useReels } from '../../data/useData'
 import { estaPagadoEn, mesesAdeudados, mesesDelAbono } from '../../domain/abonos'
 import type { Abono } from '../../domain/types'
 import { abrirEnPestana } from '../../lib/clipboard'
@@ -20,6 +20,7 @@ import { Avatar, EmptyState, ItemAnimado, ListaCargando } from '../../ui/Pieces'
 import { useToast } from '../../ui/Toast'
 import { useState } from 'react'
 import type { Dialogo } from '../../ui/useDialogo'
+import { VideosDeAbono } from './VideosDeAbono'
 
 interface Props {
   dialogo: Dialogo<Abono>
@@ -28,7 +29,9 @@ interface Props {
 /** La pestaña "Mensuales" de Colaboraciones: clientes que pagan una cuota fija por mes. */
 export function AbonosList({ dialogo }: Props) {
   const { datos, cargando } = useAbonos()
+  const { datos: reels } = useReels()
   const [historialDe, setHistorialDe] = useState<string | null>(null)
+  const [videosDe, setVideosDe] = useState<string | null>(null)
 
   if (cargando) return <ListaCargando />
   const abonos = [...(datos ?? [])].sort((a, b) => (a.activo === b.activo ? a.nombreCliente.toLowerCase().localeCompare(b.nombreCliente.toLowerCase()) : a.activo ? -1 : 1))
@@ -54,17 +57,32 @@ export function AbonosList({ dialogo }: Props) {
         <AnimatePresence mode="popLayout">
           {abonos.map((abono, i) => (
             <ItemAnimado key={abono.id} indice={i}>
-              <TarjetaAbono abono={abono} onEditar={() => dialogo.abrir(abono)} onHistorial={() => setHistorialDe(abono.id)} />
+              <TarjetaAbono
+                abono={abono}
+                cantidadVideos={(reels ?? []).filter((r) => r.categoria === 'abono' && r.abonoId === abono.id).length}
+                onEditar={() => dialogo.abrir(abono)}
+                onHistorial={() => setHistorialDe(abono.id)}
+                onVideos={() => setVideosDe(abono.id)}
+              />
             </ItemAnimado>
           ))}
         </AnimatePresence>
       </div>
       <HistorialAbono abono={abonos.find((a) => a.id === historialDe)} onClose={() => setHistorialDe(null)} />
+      <VideosDeAbono abono={abonos.find((a) => a.id === videosDe)} onClose={() => setVideosDe(null)} />
     </>
   )
 }
 
-function TarjetaAbono({ abono, onEditar, onHistorial }: { abono: Abono; onEditar: () => void; onHistorial: () => void }) {
+interface PropsTarjeta {
+  abono: Abono
+  cantidadVideos: number
+  onEditar: () => void
+  onHistorial: () => void
+  onVideos: () => void
+}
+
+function TarjetaAbono({ abono, cantidadVideos, onEditar, onHistorial, onVideos }: PropsTarjeta) {
   const confirmar = useConfirmar()
   const toast = useToast()
   const hoy = new Date()
@@ -143,6 +161,9 @@ function TarjetaAbono({ abono, onEditar, onHistorial }: { abono: Abono; onEditar
             {pagadoEsteMes ? `Desmarcar ${nombreMes(mesActual)}` : `Marcar ${nombreMes(mesActual)} como pagado`}
           </Button>
         )}
+        <Button tamano="sm" icono={<Clapperboard className="size-4" />} onClick={onVideos}>
+          Videos{cantidadVideos > 0 ? ` (${cantidadVideos})` : ''}
+        </Button>
         <Button tamano="sm" icono={<ClipboardCheck className="size-4" />} onClick={onHistorial}>
           Historial
         </Button>

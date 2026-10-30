@@ -1,40 +1,45 @@
-import { AnimatePresence, motion } from 'framer-motion'
-import { Clapperboard, ExternalLink, Pencil, Play, Trash2 } from 'lucide-react'
+import { AnimatePresence } from 'framer-motion'
+import { Clapperboard } from 'lucide-react'
 import { useState } from 'react'
-import { useColaboraciones, useReels } from '../../data/useData'
-import type { CategoriaReel, Colaboracion, Reel } from '../../domain/types'
-import { abrirEnPestana } from '../../lib/clipboard'
-import { paletaPorTexto } from '../../lib/colors'
-import { urlEmbebidaReel } from '../../lib/instagram'
-import { eliminarReel, guardarReel } from '../../services/simples'
+import { useAbonos, useColaboraciones, useReels } from '../../data/useData'
+import type { Abono, CategoriaReel, Reel } from '../../domain/types'
+import { eliminarReel } from '../../services/simples'
 import { Button } from '../../ui/Button'
 import { useConfirmar } from '../../ui/Confirm'
-import { Campo, Input, Segmentado, Select, Textarea } from '../../ui/Fields'
-import { FormModal } from '../../ui/FormModal'
-import { Menu } from '../../ui/Menu'
-import { Modal } from '../../ui/Modal'
+import { colorDeAbono } from '../../ui/estilosEvento'
 import { EmptyState, ItemAnimado, ListaCargando, PageHeader, PrimaryAction } from '../../ui/Pieces'
 import { Tabs } from '../../ui/Tabs'
 import { useToast } from '../../ui/Toast'
-import { useDialogo, type Dialogo } from '../../ui/useDialogo'
+import { useDialogo } from '../../ui/useDialogo'
+import { FormularioReel, PortadaReel, ReproductorReel, type ValorReel } from './ReelComponentes'
 
 type Filtro = 'todos' | CategoriaReel
 
-const etiquetaCategoria: Record<CategoriaReel, string> = { ejemplo: 'Ejemplo', colaboracion: 'Colaboración' }
+const cuadricula = 'grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5'
 
-/** Galería de reels guardados: solo el link y la descripción; el video se reproduce embebido desde Instagram. */
+/**
+ * Galería de reels guardados: solo el link y la descripción; el video se reproduce
+ * embebido desde Instagram. Los de clientes fijos (abonos mensuales) se agrupan
+ * por cliente en su propia pestaña y también viven dentro de cada cliente.
+ */
 export function ReelsPage() {
   const { datos, cargando } = useReels()
   const { datos: colaboraciones } = useColaboraciones()
+  const { datos: abonos } = useAbonos()
   const [filtro, setFiltro] = useState<Filtro>('todos')
   const [reproduciendo, setReproduciendo] = useState<Reel | null>(null)
-  const dialogo = useDialogo<Reel>()
+  const dialogo = useDialogo<ValorReel>()
   const confirmar = useConfirmar()
   const toast = useToast()
 
   const reels = datos ?? []
   const visibles = reels.filter((r) => filtro === 'todos' || r.categoria === filtro)
-  const clienteDe = (r: Reel) => colaboraciones?.find((c) => c.id === r.colaboracionId)?.nombreCliente
+  const abonoDe = (r: Reel) => abonos?.find((a) => a.id === r.abonoId)
+  const clienteDe = (r: Reel) => (r.categoria === 'abono' ? abonoDe(r)?.nombreCliente : colaboraciones?.find((c) => c.id === r.colaboracionId)?.nombreCliente)
+  const colorDe = (r: Reel) => {
+    const abono = abonoDe(r)
+    return r.categoria === 'abono' && abono ? colorDeAbono(abono).base : undefined
+  }
 
   async function borrar(r: Reel) {
     if (await confirmar({ titulo: '¿Eliminar este reel?', mensaje: 'Solo se borra el link guardado, el video en Instagram no se toca.' })) {
@@ -42,6 +47,12 @@ export function ReelsPage() {
       toast.exito('Reel eliminado')
     }
   }
+
+  const portada = (r: Reel, i: number) => (
+    <ItemAnimado key={r.id} indice={i}>
+      <PortadaReel reel={r} cliente={clienteDe(r)} colorCliente={colorDe(r)} onReproducir={() => setReproduciendo(r)} onEditar={() => dialogo.abrir({ existente: r })} onBorrar={() => void borrar(r)} />
+    </ItemAnimado>
+  )
 
   return (
     <>
@@ -61,6 +72,7 @@ export function ReelsPage() {
             { valor: 'todos', etiqueta: 'Todos', cantidad: reels.length },
             { valor: 'ejemplo', etiqueta: 'Ejemplos', cantidad: reels.filter((r) => r.categoria === 'ejemplo').length },
             { valor: 'colaboracion', etiqueta: 'Colaboraciones', cantidad: reels.filter((r) => r.categoria === 'colaboracion').length },
+            { valor: 'abono', etiqueta: 'Clientes fijos', cantidad: reels.filter((r) => r.categoria === 'abono').length },
           ]}
         />
       )}
@@ -78,161 +90,70 @@ export function ReelsPage() {
             </Button>
           }
         />
+      ) : filtro === 'abono' ? (
+        <PorCliente reels={visibles} abonos={abonos ?? []} portada={portada} onNuevo={(abonoId) => dialogo.abrir({ abonoId })} />
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
-          <AnimatePresence mode="popLayout">
-            {visibles.map((r, i) => (
-              <ItemAnimado key={r.id} indice={i}>
-                <PortadaReel reel={r} cliente={clienteDe(r)} onReproducir={() => setReproduciendo(r)} onEditar={() => dialogo.abrir(r)} onBorrar={() => void borrar(r)} />
-              </ItemAnimado>
-            ))}
-          </AnimatePresence>
+        <div className={cuadricula}>
+          <AnimatePresence mode="popLayout">{visibles.map(portada)}</AnimatePresence>
         </div>
       )}
 
       <ReproductorReel reel={reproduciendo} onClose={() => setReproduciendo(null)} />
-      <FormularioReel dialogo={dialogo} colaboraciones={colaboraciones ?? []} />
+      <FormularioReel dialogo={dialogo} colaboraciones={colaboraciones ?? []} abonos={abonos ?? []} />
     </>
   )
 }
 
-interface PropsPortada {
-  reel: Reel
-  cliente: string | undefined
-  onReproducir: () => void
-  onEditar: () => void
-  onBorrar: () => void
+interface PropsPorCliente {
+  reels: Reel[]
+  abonos: Abono[]
+  portada: (r: Reel, i: number) => React.ReactNode
+  onNuevo: (abonoId: string) => void
 }
 
-/** Portada vertical con un degradado propio de cada reel (Instagram no deja leer la miniatura real sin token). */
-function PortadaReel({ reel, cliente, onReproducir, onEditar, onBorrar }: PropsPortada) {
-  const [a, b] = paletaPorTexto(reel.id)
+/** Los reels de clientes fijos, en una sección por cliente (con su color), para saber de quién es cada uno. */
+function PorCliente({ reels, abonos, portada, onNuevo }: PropsPorCliente) {
+  if (reels.length === 0) {
+    return (
+      <EmptyState
+        icono={<Clapperboard />}
+        titulo="Todavía no hay reels de clientes fijos"
+        descripcion="Al guardar un reel elegí la categoría «Cliente fijo» y a qué abono mensual pertenece. También podés agregarlos desde Colaboraciones → Mensuales, dentro de cada cliente."
+      />
+    )
+  }
+
+  const secciones = abonos.filter((a) => reels.some((r) => r.abonoId === a.id)).sort((a, b) => a.nombreCliente.localeCompare(b.nombreCliente, 'es'))
+  const sinCliente = reels.filter((r) => !abonos.some((a) => a.id === r.abonoId))
 
   return (
-    <motion.div
-      role="button"
-      tabIndex={0}
-      aria-label={`Reproducir: ${reel.descripcion || 'reel'}`}
-      onClick={onReproducir}
-      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onReproducir()}
-      whileHover={{ y: -5 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: 'spring', stiffness: 380, damping: 26 }}
-      className="group relative aspect-[3/4] cursor-pointer overflow-hidden rounded-3xl shadow-soft transition-shadow hover:shadow-lift"
-      style={{ backgroundImage: `linear-gradient(160deg, ${a}, ${b})` }}
-    >
-      <div className="absolute -left-10 -top-10 size-44 rounded-full bg-white/20 blur-2xl" />
-      <div className="absolute -bottom-12 -right-10 size-52 rounded-full bg-black/15 blur-2xl" />
-      <Clapperboard className="absolute -right-6 top-1/3 size-40 rotate-12 text-white/10" />
-
-      <div className="absolute inset-x-3 top-3 flex items-start justify-between">
-        <span className="rounded-full bg-black/25 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-md">{etiquetaCategoria[reel.categoria]}</span>
-        <div onClick={(e) => e.stopPropagation()}>
-          <Menu
-            claseBoton="size-8 bg-black/25 text-white backdrop-blur-md hover:bg-black/40 hover:text-white"
-            items={[
-              { etiqueta: 'Abrir en Instagram', icono: <ExternalLink />, onClick: () => abrirEnPestana(reel.urlInstagram) },
-              { etiqueta: 'Editar', icono: <Pencil />, onClick: onEditar },
-              { etiqueta: 'Eliminar', icono: <Trash2 />, peligro: true, onClick: onBorrar },
-            ]}
-          />
-        </div>
-      </div>
-
-      <div className="absolute inset-0 grid place-items-center">
-        <motion.div
-          className="grid size-16 place-items-center rounded-full bg-white/25 text-white shadow-lg backdrop-blur-md ring-1 ring-white/40 transition-transform duration-300 group-hover:scale-110"
-          whileHover={{ scale: 1.15 }}
-        >
-          <Play className="ml-1 size-7 fill-white" />
-        </motion.div>
-      </div>
-
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent p-4 pt-14">
-        <p className="line-clamp-3 text-sm font-bold leading-snug text-white">{reel.descripcion || 'Reel sin descripción'}</p>
-        {cliente && <p className="mt-1.5 text-xs font-semibold text-white/75">{cliente}</p>}
-      </div>
-    </motion.div>
-  )
-}
-
-/** Visor grande con forma de teléfono, sobre un degradado verde de la marca. */
-function ReproductorReel({ reel, onClose }: { reel: Reel | null; onClose: () => void }) {
-  return (
-    <Modal open={reel !== null} onClose={onClose} titulo={reel?.descripcion || 'Reel'} size="lg" sinRelleno>
-      {reel && (
-        <>
-          <div className="grid place-items-center bg-gradient-to-br from-brand-800 via-brand-600 to-brand-400 px-4 py-6">
-            <div className="aspect-[9/16] h-[min(68dvh,780px)] max-w-full overflow-hidden rounded-[30px] bg-black shadow-pop ring-4 ring-white/15">
-              <iframe
-                key={reel.id}
-                src={urlEmbebidaReel(reel.urlInstagram)}
-                title={reel.descripcion || 'Reel de Instagram'}
-                className="size-full border-0"
-                allow="autoplay; encrypted-media; clipboard-write; picture-in-picture"
-                allowFullScreen
-              />
+    <div className="space-y-9">
+      {secciones.map((abono) => {
+        const delCliente = reels.filter((r) => r.abonoId === abono.id)
+        const color = colorDeAbono(abono)
+        return (
+          <section key={abono.id}>
+            <div className="mb-3.5 flex items-center gap-2.5">
+              <span style={{ backgroundColor: color.base }} className="size-3 rounded-full" />
+              <h2 className="text-base font-extrabold tracking-tight text-ink">{abono.nombreCliente}</h2>
+              <span className="text-sm text-faint">
+                {delCliente.length} {delCliente.length === 1 ? 'video' : 'videos'}
+              </span>
+              <Button variante="fantasma" tamano="sm" onClick={() => onNuevo(abono.id)} className="ml-auto">
+                Agregar video
+              </Button>
             </div>
-          </div>
-          <div className="flex justify-end border-t border-line px-6 py-3">
-            <Button icono={<ExternalLink className="size-4" />} onClick={() => abrirEnPestana(reel.urlInstagram)}>
-              Abrir en Instagram
-            </Button>
-          </div>
-        </>
+            <div className={cuadricula}>{delCliente.map(portada)}</div>
+          </section>
+        )
+      })}
+
+      {sinCliente.length > 0 && (
+        <section>
+          <h2 className="mb-3.5 text-base font-extrabold tracking-tight text-ink">Sin cliente asignado</h2>
+          <div className={cuadricula}>{sinCliente.map(portada)}</div>
+        </section>
       )}
-    </Modal>
-  )
-}
-
-function FormularioReel({ dialogo, colaboraciones }: { dialogo: Dialogo<Reel>; colaboraciones: Colaboracion[] }) {
-  return <Interno key={dialogo.clave} dialogo={dialogo} colaboraciones={colaboraciones} />
-}
-
-function Interno({ dialogo, colaboraciones }: { dialogo: Dialogo<Reel>; colaboraciones: Colaboracion[] }) {
-  const existente = dialogo.valor
-  const [url, setUrl] = useState(existente?.urlInstagram ?? '')
-  const [descripcion, setDescripcion] = useState(existente?.descripcion ?? '')
-  const [categoria, setCategoria] = useState<CategoriaReel>(existente?.categoria ?? 'ejemplo')
-  const [colaboracionId, setColaboracionId] = useState(existente?.colaboracionId ?? '')
-
-  return (
-    <FormModal
-      open={dialogo.abierto}
-      onClose={dialogo.cerrar}
-      titulo={existente ? 'Editar reel' : 'Nuevo reel'}
-      etiquetaGuardar={existente ? 'Actualizar' : 'Guardar'}
-      mensajeExito={existente ? 'Reel actualizado' : 'Reel guardado'}
-      onSubmit={() => guardarReel({ urlInstagram: url, descripcion, categoria, colaboracionId: colaboracionId === '' ? null : colaboracionId }, existente)}
-    >
-      <Campo etiqueta="Link del reel">{(id) => <Input id={id} value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://www.instagram.com/reel/..." autoFocus />}</Campo>
-      <Campo etiqueta="Descripción">{(id) => <Textarea id={id} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={2} className="min-h-[4.5rem]" />}</Campo>
-      <div>
-        <p className="mb-1.5 text-[13px] font-semibold text-ink">Categoría</p>
-        <Segmentado
-          etiqueta="Categoría"
-          valor={categoria}
-          onChange={setCategoria}
-          opciones={[
-            { valor: 'ejemplo', etiqueta: 'Ejemplo' },
-            { valor: 'colaboracion', etiqueta: 'Colaboración' },
-          ]}
-        />
-      </div>
-      {colaboraciones.length > 0 && (
-        <Campo etiqueta="Cliente" opcional>
-          {(id) => (
-            <Select id={id} value={colaboracionId} onChange={(e) => setColaboracionId(e.target.value)}>
-              <option value="">Ninguno</option>
-              {colaboraciones.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombreCliente}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Campo>
-      )}
-    </FormModal>
+    </div>
   )
 }

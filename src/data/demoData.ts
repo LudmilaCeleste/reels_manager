@@ -45,6 +45,11 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
     { id: 'r5', data: { urlInstagram: 'https://www.instagram.com/reel/DEMO0005/', descripcion: 'Pack carta en mesa: pedido sin esperar', categoria: 'ejemplo', colaboracionId: null } },
     { id: 'r6', data: { urlInstagram: 'https://www.instagram.com/reel/DEMO0006/', descripcion: 'Promo de verano en Estética Aura', categoria: 'colaboracion', colaboracionId: 'c4' } },
     { id: 'r7', data: { urlInstagram: 'https://www.instagram.com/reel/DEMO0007/', descripcion: 'Aftermovie de beach club con drone', categoria: 'ejemplo', colaboracionId: null } },
+    { id: 'r8', data: { urlInstagram: 'https://www.instagram.com/reel/DEMO0008/', descripcion: 'Plato del día: paella para dos', categoria: 'abono', colaboracionId: null, abonoId: 'a1' } },
+    { id: 'r9', data: { urlInstagram: 'https://www.instagram.com/reel/DEMO0009/', descripcion: 'Detrás de cámaras en la cocina', categoria: 'abono', colaboracionId: null, abonoId: 'a1' } },
+    { id: 'r10', data: { urlInstagram: 'https://www.instagram.com/reel/DEMO0010/', descripcion: 'Atardecer en la terraza del hotel', categoria: 'abono', colaboracionId: null, abonoId: 'a2' } },
+    { id: 'r11', data: { urlInstagram: 'https://www.instagram.com/reel/DEMO0011/', descripcion: 'Desayuno buffet: lo que no te podés perder', categoria: 'abono', colaboracionId: null, abonoId: 'a2' } },
+    { id: 'r12', data: { urlInstagram: 'https://www.instagram.com/reel/DEMO0012/', descripcion: 'Tratamiento facial paso a paso', categoria: 'abono', colaboracionId: null, abonoId: 'a3' } },
   ])
 
   b.sembrar(COLECCION.abonos, [

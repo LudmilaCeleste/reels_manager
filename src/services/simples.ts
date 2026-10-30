@@ -11,15 +11,25 @@ export interface DatosReel {
   descripcion: string
   categoria: CategoriaReel
   colaboracionId: string | null
+  /** Solo se guarda si la categoría es "abono". */
+  abonoId: string | null
 }
 
 export async function guardarReel(datos: DatosReel, existente?: Reel): Promise<void> {
   const url = datos.urlInstagram.trim()
   if (!esLinkDeInstagramValido(url)) throw new ErrorDeValidacion('El link tiene que ser de instagram.com')
+  if (datos.categoria === 'abono' && !datos.abonoId) throw new ErrorDeValidacion('Elegí a qué cliente fijo pertenece el reel')
+  const esDeAbono = datos.categoria === 'abono'
   await backend().set(
     COLECCION.reels,
     existente?.id ?? nuevoId(),
-    deReel({ urlInstagram: url, descripcion: datos.descripcion.trim(), categoria: datos.categoria, colaboracionId: datos.colaboracionId }),
+    deReel({
+      urlInstagram: url,
+      descripcion: datos.descripcion.trim(),
+      categoria: datos.categoria,
+      colaboracionId: esDeAbono ? null : datos.colaboracionId,
+      abonoId: esDeAbono ? datos.abonoId : null,
+    }),
   )
 }
 

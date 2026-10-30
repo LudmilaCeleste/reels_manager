@@ -12,7 +12,8 @@ export interface Colaboracion {
   fecha: Date | null
 }
 
-export type CategoriaReel = 'ejemplo' | 'colaboracion'
+/** `abono` = reel de un cliente fijo (abono mensual). */
+export type CategoriaReel = 'ejemplo' | 'colaboracion' | 'abono'
 
 export interface Reel {
   id: string
@@ -20,6 +21,8 @@ export interface Reel {
   descripcion: string
   categoria: CategoriaReel
   colaboracionId: string | null
+  /** El cliente fijo al que pertenece, si la categoría es `abono`. */
+  abonoId: string | null
 }
 
 /** Qué clase de cosa es un evento del calendario (define su color). */
