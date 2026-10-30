@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { coloresAbono, colorAbonoPorDefecto } from '../../domain/colores'
 import { ErrorDeValidacion, type Abono, type ColorAbono } from '../../domain/types'
 import { cn } from '../../lib/cn'
+import { textoSobre } from '../../ui/estilosEvento'
 import { aInputMes, desdeInputMes, etiquetaMes } from '../../lib/dates'
 import { parsearMonto } from '../../lib/money'
 import { guardarAbono } from '../../services/abonos'
@@ -90,8 +91,8 @@ function Formulario({ dialogo }: { dialogo: Dialogo<Abono> }) {
               whileTap={{ scale: 0.88 }}
               whileHover={{ scale: 1.1 }}
               onClick={() => setColor(c.clave)}
-              style={{ backgroundColor: c.hex }}
-              className={cn('grid size-8 place-items-center rounded-full text-white transition-shadow', color === c.clave ? 'ring-2 ring-ink ring-offset-2 ring-offset-surface' : 'ring-0')}
+              style={{ backgroundColor: c.hex, color: textoSobre(c.hex) }}
+              className={cn('grid size-8 place-items-center rounded-full transition-shadow', color === c.clave ? 'ring-2 ring-ink ring-offset-2 ring-offset-surface' : 'ring-0')}
             >
               {color === c.clave && <Check className="size-4" strokeWidth={3} />}
             </motion.button>

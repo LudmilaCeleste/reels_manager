@@ -149,7 +149,7 @@ export function CalendarioPage() {
                     <span
                       className={cn(
                         'relative grid size-7 shrink-0 place-items-center rounded-full text-[13px] font-bold lg:size-8 lg:text-sm',
-                        isToday(d) ? 'bg-brand-500 text-white shadow-md' : delMes ? 'text-ink' : 'text-faint/70',
+                        isToday(d) ? 'bg-brand-700 text-white dark:bg-brand-400 dark:text-brand-950 shadow-md' : delMes ? 'text-ink' : 'text-faint',
                       )}
                     >
                       {d.getDate()}

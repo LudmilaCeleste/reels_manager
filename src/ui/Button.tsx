@@ -8,7 +8,7 @@ export type TamanoBoton = 'sm' | 'md' | 'lg'
 
 const variantes: Record<VarianteBoton, string> = {
   primario:
-    'bg-gradient-to-b from-brand-400 to-brand-600 text-white shadow-[0_1px_0_rgb(255_255_255/0.25)_inset,0_8px_20px_-8px_rgb(20_146_138/0.7)] hover:from-brand-400 hover:to-brand-500',
+    'bg-gradient-to-b from-brand-600 to-brand-700 text-white shadow-[0_1px_0_rgb(255_255_255/0.22)_inset,0_8px_20px_-8px_rgb(20_146_138/0.7)] hover:from-brand-500 hover:to-brand-600',
   secundario: 'bg-surface text-ink border border-line shadow-soft hover:bg-surface2',
   suave: 'bg-brand-500/12 text-brand-700 hover:bg-brand-500/20 dark:text-brand-300',
   fantasma: 'text-muted hover:bg-ink/5 hover:text-ink',

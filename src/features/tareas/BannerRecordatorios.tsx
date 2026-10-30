@@ -49,7 +49,7 @@ export function BannerRecordatorios({ avisos, eventos, onVerTareas, onVerCalenda
       className="mb-6 overflow-hidden"
     >
       <div className="relative flex items-start gap-3 overflow-hidden rounded-2xl border border-brand-500/30 bg-gradient-to-r from-brand-500/15 via-brand-500/8 to-transparent p-3.5 pr-2 shadow-soft sm:gap-4 sm:p-4 sm:pr-3">
-        <div className="relative mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-brand-500 text-white sm:size-10">
+        <div className="relative mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-brand-600 text-white sm:size-10">
           <span className="absolute inset-0 animate-pulse-ring rounded-xl" />
           <BellRing className="relative size-[18px] sm:size-5" />
         </div>

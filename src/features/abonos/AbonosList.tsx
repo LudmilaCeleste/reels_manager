@@ -120,9 +120,6 @@ function TarjetaAbono({ abono, cantidadVideos, onEditar, onHistorial, onVideos }
           <h3 className="truncate text-base font-bold text-ink">{abono.nombreCliente}</h3>
           {abono.instagramCliente && <p className="truncate text-sm text-muted">@{abono.instagramCliente}</p>}
         </div>
-        <Badge tono={estado.tono} punto>
-          {estado.texto}
-        </Badge>
         <Menu
           items={[
             { etiqueta: 'Editar', icono: <Pencil />, onClick: onEditar },
@@ -133,9 +130,12 @@ function TarjetaAbono({ abono, cantidadVideos, onEditar, onHistorial, onVideos }
         />
       </div>
 
-      <div className="mt-4 flex items-baseline gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2">
         <span className="text-2xl font-extrabold tracking-tight" style={estiloTexto(color)}>{formatearPrecio(abono.montoMensual)}</span>
         <span className="text-sm font-medium text-muted">por mes</span>
+        <Badge tono={estado.tono} punto className="ml-auto">
+          {estado.texto}
+        </Badge>
       </div>
       <p className="mt-1 flex items-center gap-1.5 text-xs text-faint">
         <CalendarClock className="size-3.5" />

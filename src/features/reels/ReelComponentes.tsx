@@ -48,7 +48,7 @@ export function PortadaReel({ reel, cliente, colorCliente, onReproducir, onEdita
       <Clapperboard className="absolute -right-6 top-1/3 size-40 rotate-12 text-white/10" />
 
       <div className="absolute inset-x-3 top-3 z-10 flex items-start justify-between">
-        <span className="rounded-full bg-black/25 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-md">{etiquetaCategoria[reel.categoria]}</span>
+        <span className="rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-md">{etiquetaCategoria[reel.categoria]}</span>
         <div onClick={(e) => e.stopPropagation()}>
           <Menu
             claseBoton="size-8 bg-black/25 text-white backdrop-blur-md hover:bg-black/40 hover:text-white"

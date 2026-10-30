@@ -1,14 +1,15 @@
 /** Pares de colores para avatares y portadas: cada texto siempre cae en el mismo. */
 const PALETAS: ReadonlyArray<readonly [string, string]> = [
-  ['#45cbbc', '#14928a'], // verde agua (marca)
-  ['#818cf8', '#4f46e5'], // índigo
-  ['#c084fc', '#9333ea'], // violeta
-  ['#fb7185', '#e11d48'], // rosa
-  ['#fbbf24', '#d97706'], // ámbar
-  ['#38bdf8', '#0284c7'], // celeste
-  ['#34d399', '#059669'], // esmeralda
-  ['#f472b6', '#c026d3'], // fucsia
+  ['#14928a', '#0f5f5a'], // verde agua (marca)
+  ['#6366f1', '#4338ca'], // índigo
+  ['#a855f7', '#7e22ce'], // violeta
+  ['#f43f5e', '#be123c'], // rosa
+  ['#d97706', '#b45309'], // ámbar
+  ['#0284c7', '#075985'], // celeste
+  ['#059669', '#047857'], // esmeralda
+  ['#db2777', '#a21caf'], // fucsia
 ]
+// Todos son lo bastante oscuros como para que las letras blancas se lean bien, en modo claro y oscuro.
 
 function hash(texto: string): number {
   let h = 0

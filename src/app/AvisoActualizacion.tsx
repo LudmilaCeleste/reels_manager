@@ -79,7 +79,7 @@ export function AvisoActualizacion() {
           className="fixed inset-x-3 bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+6rem)] z-50 lg:inset-x-auto lg:bottom-6 lg:right-6 lg:w-[24rem]"
         >
           <div className="flex items-start gap-3.5 rounded-2xl border border-brand-500/30 bg-surface p-4 shadow-pop">
-            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-500 text-white">
+            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
               <RefreshCw className={actualizando ? 'size-5 animate-spin' : 'size-5'} />
             </div>
             <div className="min-w-0 flex-1">

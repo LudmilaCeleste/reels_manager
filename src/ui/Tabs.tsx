@@ -58,7 +58,7 @@ export function Tabs<T extends string>({ pestanas, valor, onChange, className }:
                 <span
                   className={cn(
                     'grid min-w-5 place-items-center rounded-full px-1.5 py-0.5 text-[11px] font-bold leading-none',
-                    activa ? 'bg-brand-500 text-white' : 'bg-ink/8 text-muted',
+                    activa ? 'bg-brand-700 text-white dark:bg-brand-400 dark:text-brand-950' : 'bg-ink/8 text-muted',
                   )}
                 >
                   {p.cantidad}

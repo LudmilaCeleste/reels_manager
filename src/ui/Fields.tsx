@@ -138,7 +138,7 @@ export function Ficha({ activa, onClick, children }: PropsFicha) {
       onClick={onClick}
       className={cn(
         'inline-flex h-9 min-w-12 items-center justify-center gap-1.5 rounded-xl border px-3 text-[13px] font-semibold transition-colors',
-        activa ? 'border-brand-500 bg-brand-500 text-white shadow-sm' : 'border-line bg-surface text-muted hover:border-brand-500/50 hover:text-ink',
+        activa ? 'border-brand-700 bg-brand-700 text-white shadow-sm dark:border-brand-400 dark:bg-brand-400 dark:text-brand-950' : 'border-line bg-surface text-muted hover:border-brand-500/50 hover:text-ink',
       )}
     >
       {activa && <Check className="size-3.5" />}

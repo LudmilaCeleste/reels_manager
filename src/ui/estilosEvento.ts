@@ -19,12 +19,12 @@ export interface ColorEvento {
  * en el modo claro y blanca en el oscuro.
  */
 export const coloresTipo: Record<TipoEvento, ColorEvento> = {
-  tarea: { base: '#1fb6a6', sobre: '#ffffff' },
-  colaboracion: { base: '#ec4899', sobre: '#ffffff' },
-  abono: { base: '#0ea5e9', sobre: '#ffffff' },
+  tarea: { base: '#1fb6a6', sobre: textoSobre('#1fb6a6') },
+  colaboracion: { base: '#ec4899', sobre: textoSobre('#ec4899') },
+  abono: { base: '#0ea5e9', sobre: textoSobre('#0ea5e9') },
   reunion: { base: 'var(--ink)', sobre: 'var(--surface)', solido: true },
-  grabacion: { base: '#f97316', sobre: '#ffffff' },
-  evento: { base: '#f59e0b', sobre: '#ffffff' },
+  grabacion: { base: '#f97316', sobre: textoSobre('#f97316') },
+  evento: { base: '#f59e0b', sobre: textoSobre('#f59e0b') },
 }
 
 export const pluralTipoEvento: Record<TipoEvento, string> = {
@@ -34,6 +34,18 @@ export const pluralTipoEvento: Record<TipoEvento, string> = {
   reunion: 'Reuniones',
   grabacion: 'Grabaciones',
   evento: 'Otros eventos',
+}
+
+/** Blanco o casi negro, el que más contraste dé sobre un color (#rrggbb). */
+export function textoSobre(hex: string): string {
+  const canal = (i: number) => {
+    const v = parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) / 255
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+  }
+  const luz = 0.2126 * canal(0) + 0.7152 * canal(1) + 0.0722 * canal(2)
+  const contraBlanco = 1.05 / (luz + 0.05)
+  const contraOscuro = (luz + 0.05) / 0.065
+  return contraBlanco >= contraOscuro ? '#ffffff' : '#0f2423'
 }
 
 const mezcla = (color: string, porcentaje: number, con = 'transparent') => `color-mix(in srgb, ${color} ${porcentaje}%, ${con})`
@@ -54,7 +66,10 @@ export const estiloTexto = (c: ColorEvento): CSSProperties => ({ color: mezcla(c
 /** Franja de color para el borde de una tarjeta. */
 export const estiloFranja = (c: ColorEvento): CSSProperties => ({ backgroundImage: `linear-gradient(90deg, ${c.base}, ${mezcla(c.base, 62, 'white')})` })
 
-export const colorDeAbono = (abono: Pick<Abono, 'color'>): ColorEvento => ({ base: hexDeAbono(abono), sobre: '#ffffff' })
+export const colorDeAbono = (abono: Pick<Abono, 'color'>): ColorEvento => {
+  const base = hexDeAbono(abono)
+  return { base, sobre: textoSobre(base) }
+}
 
 /** El color de un evento: el del tipo, salvo los de abono, que usan el color elegido para ese cliente. */
 export function colorDeEvento(evento: EventoCalendario, abonos: Abono[]): ColorEvento {

@@ -160,11 +160,11 @@ type TonoTarjeta = 'marca' | 'aviso' | 'abono' | 'abonoPendiente'
 /** Los abonos mensuales tienen su propio color (celeste) para distinguirlos de las colaboraciones puntuales. */
 const tonosTarjeta: Record<TonoTarjeta, { caja: string; brillo: string; icono: string; titulo: string; detalle: string }> = {
   marca: {
-    caja: 'bg-gradient-to-br from-brand-400 via-brand-500 to-brand-700 text-white',
+    caja: 'bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 text-white',
     brillo: 'bg-white/20',
     icono: 'bg-white/20',
     titulo: 'text-white/90',
-    detalle: 'text-white/80',
+    detalle: 'text-white/90',
   },
   aviso: {
     caja: 'border border-amber-500/30 bg-gradient-to-br from-amber-400/20 via-amber-500/10 to-surface text-ink',
@@ -174,11 +174,11 @@ const tonosTarjeta: Record<TonoTarjeta, { caja: string; brillo: string; icono: s
     detalle: 'text-muted',
   },
   abono: {
-    caja: 'bg-gradient-to-br from-sky-400 via-sky-500 to-sky-700 text-white',
+    caja: 'bg-gradient-to-br from-sky-600 via-sky-700 to-sky-800 text-white',
     brillo: 'bg-white/20',
     icono: 'bg-white/20',
     titulo: 'text-white/90',
-    detalle: 'text-white/80',
+    detalle: 'text-white/90',
   },
   abonoPendiente: {
     caja: 'border border-sky-500/30 bg-gradient-to-br from-sky-400/20 via-sky-500/10 to-surface text-ink',
