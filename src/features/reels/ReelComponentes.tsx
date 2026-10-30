@@ -47,7 +47,7 @@ export function PortadaReel({ reel, cliente, colorCliente, onReproducir, onEdita
       <div className="absolute -bottom-12 -right-10 size-52 rounded-full bg-black/15 blur-2xl" />
       <Clapperboard className="absolute -right-6 top-1/3 size-40 rotate-12 text-white/10" />
 
-      <div className="absolute inset-x-3 top-3 flex items-start justify-between">
+      <div className="absolute inset-x-3 top-3 z-10 flex items-start justify-between">
         <span className="rounded-full bg-black/25 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-md">{etiquetaCategoria[reel.categoria]}</span>
         <div onClick={(e) => e.stopPropagation()}>
           <Menu
@@ -61,7 +61,8 @@ export function PortadaReel({ reel, cliente, colorCliente, onReproducir, onEdita
         </div>
       </div>
 
-      <div className="absolute inset-0 grid place-items-center">
+      {/* Solo decora: no tapa los tres puntitos ni intercepta clics (la tarjeta entera ya reproduce). */}
+      <div className="pointer-events-none absolute inset-0 grid place-items-center">
         <motion.div
           className="grid size-16 place-items-center rounded-full bg-white/25 text-white shadow-lg backdrop-blur-md ring-1 ring-white/40 transition-transform duration-300 group-hover:scale-110"
           whileHover={{ scale: 1.15 }}
