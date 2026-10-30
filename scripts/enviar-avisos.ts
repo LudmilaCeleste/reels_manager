@@ -1,5 +1,6 @@
 /**
- * Manda el aviso del día a los teléfonos que activaron las notificaciones.
+ * Manda el aviso del día (las tareas de hoy, o una invitación a entrar a la app si no
+ * hay nada) a los teléfonos que activaron las notificaciones, todos los días a las 9:00.
  * Lo corre GitHub Actions todas las mañanas (.github/workflows/avisos.yml);
  * también se puede correr a mano:
  *
@@ -77,6 +78,18 @@ console.log(`Aviso:\n${aviso.cuerpo}`)
 if (simular) {
   console.log('(modo simulación: no se envió nada)')
   process.exit(0)
+}
+
+// GitHub puede atrasar los trabajos programados varios minutos. Se programa un rato antes y
+// acá se espera hasta las 9:00 para que la notificación llegue a esa hora (si ya pasó, se manda ya).
+const HORA_DE_ENVIO = 9
+const ESPERA_MAXIMA_MIN = 25
+const objetivo = new Date()
+objetivo.setHours(HORA_DE_ENVIO, 0, 0, 0)
+const faltaMs = objetivo.getTime() - Date.now()
+if (!prueba && faltaMs > 0 && faltaMs <= ESPERA_MAXIMA_MIN * 60_000) {
+  console.log(`Faltan ${Math.ceil(faltaMs / 60_000)} min para las ${HORA_DE_ENVIO}:00; espero para mandar a esa hora.`)
+  await new Promise((resolver) => setTimeout(resolver, faltaMs))
 }
 
 webpush.setVapidDetails(process.env.VAPID_SUBJECT ?? 'mailto:aguscatbernal@gmail.com', requerida('VAPID_PUBLIC_KEY'), requerida('VAPID_PRIVATE_KEY'))

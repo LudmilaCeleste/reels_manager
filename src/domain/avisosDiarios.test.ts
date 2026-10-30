@@ -5,7 +5,8 @@ import type { Abono, Consulta, EventoCalendario, Tarea } from './types'
 const hoy = new Date(2026, 9, 28)
 
 const vacio: DatosAvisos = { eventos: [], abonos: [], tareas: [], reglas: [], consultas: [] }
-const todo: QueAvisar = { deHoy: true, deManana: true, recordatorios: true, urgentes: true, consultas: true }
+const todo: QueAvisar = { deHoy: true, deManana: true, recordatorios: true, urgentes: true, consultas: true, insistir: false }
+const sinInsistir: QueAvisar = { ...avisosActivos, insistir: false }
 
 const evento = (p: Partial<EventoCalendario>): EventoCalendario => ({
   id: 'e', titulo: 'Evento', fecha: hoy, descripcion: '', colaboracionId: null, tipo: null, abonoId: null, ...p,
@@ -21,12 +22,25 @@ const abono = (p: Partial<Abono> = {}): Abono => ({
 })
 
 describe('aviso diario al teléfono: lo que pasa ese mismo día', () => {
-  it('por ahora solo avisa lo de hoy', () => {
-    expect(avisosActivos).toEqual({ deHoy: true, deManana: false, recordatorios: false, urgentes: false, consultas: false })
+  it('por ahora solo avisa lo de hoy, y todos los días', () => {
+    expect(avisosActivos).toEqual({ deHoy: true, deManana: false, recordatorios: false, urgentes: false, consultas: false, insistir: true })
   })
 
-  it('no manda nada si no hay nada hoy', () => {
-    expect(armarAvisoDiario(vacio, hoy)).toBeNull()
+  it('si no hay nada hoy, invita a entrar a la app (o no manda nada si se apaga)', () => {
+    const aviso = armarAvisoDiario(vacio, hoy)
+    expect(aviso?.titulo).toBe('Buen día 👋')
+    expect(aviso?.cuerpo).toMatch(/^Hoy no hay tareas|^Día tranquilo|^No hay nada|^Sin tareas/)
+    expect(armarAvisoDiario(vacio, hoy, sinInsistir)).toBeNull()
+  })
+
+  it('la invitación rota según el día', () => {
+    const textos = new Set([28, 29, 30, 31, 1].map((d, i) => armarAvisoDiario(vacio, new Date(2026, i === 4 ? 10 : 9, d))?.cuerpo))
+    expect(textos.size).toBe(5)
+  })
+
+  it('si no hay tareas pero hay consultas sin responder, lo dice', () => {
+    expect(armarAvisoDiario({ ...vacio, consultas: [consulta('nueva'), consulta('nueva')] }, hoy)?.cuerpo).toBe('Hoy no hay tareas, pero hay 2 consultas de la web sin responder. Entrá a la app y respondelas.')
+    expect(armarAvisoDiario({ ...vacio, consultas: [consulta('nueva')] }, hoy)?.url).toBe('/#/consultas')
   })
 
   it('avisa lo que hay en el calendario hoy, con su tipo', () => {
@@ -39,12 +53,12 @@ describe('aviso diario al teléfono: lo que pasa ese mismo día', () => {
 
   it('no avisa lo de mañana, ni lo de ayer', () => {
     const eventos = [evento({ id: 'm', fecha: new Date(2026, 9, 29) }), evento({ id: 'a', fecha: new Date(2026, 9, 27) })]
-    expect(armarAvisoDiario({ ...vacio, eventos }, hoy)).toBeNull()
+    expect(armarAvisoDiario({ ...vacio, eventos }, hoy, sinInsistir)).toBeNull()
   })
 
   it('avisa el cobro de un abono que toca hoy y sigue sin pagar, y no si ya está pagado', () => {
     expect(armarAvisoDiario({ ...vacio, abonos: [abono()] }, hoy)?.cuerpo).toBe('Estética Aura (abono mensual)')
-    expect(armarAvisoDiario({ ...vacio, abonos: [abono({ mesesPagados: ['2026-10'] })] }, hoy)).toBeNull()
+    expect(armarAvisoDiario({ ...vacio, abonos: [abono({ mesesPagados: ['2026-10'] })] }, hoy, sinInsistir)).toBeNull()
   })
 
   it('una tarea con calendario sale una sola vez (como evento), y las tareas sin calendario también avisan', () => {
@@ -70,7 +84,7 @@ describe('aviso diario al teléfono: lo que pasa ese mismo día', () => {
       tarea({ id: '3', fechaLimite: new Date(2026, 9, 27) }),
       tarea({ id: '4', fechaLimite: null }),
     ]
-    expect(armarAvisoDiario({ ...vacio, tareas }, hoy)).toBeNull()
+    expect(armarAvisoDiario({ ...vacio, tareas }, hoy, sinInsistir)).toBeNull()
   })
 
   it('una sola cosa dice "1 cosa", y si son muchas recorta a 5 líneas y cuenta las que faltan', () => {
@@ -82,8 +96,8 @@ describe('aviso diario al teléfono: lo que pasa ese mismo día', () => {
     expect(aviso?.cuerpo.split('\n').at(-1)).toBe('y 2 más')
   })
 
-  it('las consultas y los recordatorios no avisan por ahora', () => {
-    expect(armarAvisoDiario({ ...vacio, consultas: [consulta('nueva')] }, hoy)).toBeNull()
+  it('las consultas no suman a la lista de cosas para hacer hoy', () => {
+    expect(armarAvisoDiario({ ...vacio, consultas: [consulta('nueva')], eventos: [evento({})] }, hoy)?.cuerpo).toBe('Evento')
   })
 })
 

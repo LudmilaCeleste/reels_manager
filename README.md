@@ -114,15 +114,21 @@ src/
 Cada persona las activa una vez en **Cuenta → Notificaciones en el teléfono**. En el iPhone
 solo funcionan con la app agregada a la pantalla de inicio (iOS 16.4 o más nuevo).
 
-Todas las mañanas (≈ 9:00 de Argentina) un programa de GitHub Actions
+Todos los días a las **9:00** (Argentina) un programa de GitHub Actions
 ([`.github/workflows/avisos.yml`](.github/workflows/avisos.yml), código en
-[`scripts/enviar-avisos.ts`](scripts/enviar-avisos.ts)) revisa el calendario: **si hay algo ese mismo día
-manda un aviso** ("Hoy tenés 2 cosas para hacer", con la lista): eventos, colaboraciones, reuniones,
-grabaciones, tareas con fecha y cobros de abonos que siguen sin pagar. Si no hay nada, no manda nada.
+[`scripts/enviar-avisos.ts`](scripts/enviar-avisos.ts)) manda un aviso:
 
-Qué se avisa se decide en `avisosActivos` de `src/domain/avisosDiarios.ts`. Por ahora solo `deHoy`;
-ya están programados y listos para prender el aviso de un día antes (`deManana`), los
-recordatorios de tareas automáticas, las tareas vencidas y las consultas sin responder.
+- **Si hay algo ese mismo día** ("Hoy tenés 2 cosas para hacer", con la lista): eventos, colaboraciones,
+  reuniones, grabaciones, tareas con fecha y cobros de abonos que siguen sin pagar.
+- **Si no hay nada**, una invitación a entrar a la app para hacer algo ("Hoy no hay tareas. Aprovechá para
+  adelantar algo…"). Rota según el día, y si hay consultas de la web sin responder lo dice.
+
+GitHub atrasa los trabajos programados varios minutos, así que se programa a las 8:35 y el programa espera
+hasta las 9:00 para mandar (si ya pasó esa hora, lo manda al toque).
+
+Qué se avisa se decide en `avisosActivos` de `src/domain/avisosDiarios.ts`: hoy `deHoy` e `insistir`;
+listos para prender el aviso de un día antes (`deManana`), los recordatorios de tareas automáticas, las
+tareas vencidas y las consultas.
 
 **Configuración (una sola vez)** en GitHub → Settings → Secrets and variables → Actions →
 *New repository secret*:

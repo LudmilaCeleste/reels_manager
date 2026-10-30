@@ -1,10 +1,9 @@
 name: Avisos al telefono
 
-# Todas las mananas manda a los telefonos que activaron las notificaciones el
-# resumen del dia: lo del calendario de hoy y de manana, cobros de abonos,
-# recordatorios de tareas y consultas sin responder. Si no hay nada, no manda
-# nada. Tambien se puede correr a mano desde la pestana Actions
-# ("Run workflow"), con la opcion de mandar una notificacion de prueba.
+# Todos los dias a las 9:00 (Argentina) manda a los telefonos que activaron las
+# notificaciones lo que hay para hoy (calendario y tareas) o, si no hay nada,
+# una invitacion a entrar a la app. Tambien se puede correr a mano desde la
+# pestana Actions ("Run workflow"), con la opcion de mandar una prueba.
 #
 # Necesita dos secretos en GitHub (Settings > Secrets and variables > Actions):
 #   FIREBASE_SERVICE_ACCOUNT  el JSON de la clave de servicio de Firebase
@@ -12,8 +11,9 @@ name: Avisos al telefono
 # Si faltan, el trabajo se salta solo (no falla ni manda mails de error).
 on:
   schedule:
-    # 12:00 UTC = 09:00 en Argentina. GitHub puede demorarlo unos minutos.
-    - cron: "0 12 * * *"
+    # 11:35 UTC = 08:35 en Argentina. Se programa antes porque GitHub atrasa los
+    # trabajos varios minutos; el programa espera hasta las 9:00 para mandar.
+    - cron: "35 11 * * *"
   workflow_dispatch:
     inputs:
       prueba:
@@ -24,6 +24,7 @@ on:
 jobs:
   avisar:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     env:
       TIENE_CLAVES: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' && secrets.VAPID_PRIVATE_KEY != '' }}
     steps:

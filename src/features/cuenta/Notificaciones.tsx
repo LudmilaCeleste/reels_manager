@@ -11,7 +11,7 @@ const textos: Record<EstadoNotificaciones, string> = {
   'no-soportado': 'Este navegador no puede recibir notificaciones. Probá desde Chrome, Edge o Safari (en el iPhone, con la app agregada a la pantalla de inicio).',
   'instalar-primero': 'En el iPhone las notificaciones funcionan solo con la app instalada: tocá "Compartir" → "Agregar a pantalla de inicio", abrila desde ahí y activalas en esta pantalla.',
   bloqueadas: 'Las notificaciones están bloqueadas para esta app. Habilitalas en los ajustes del navegador o del teléfono y volvé a intentar.',
-  desactivadas: 'Activalas y el mismo día en que hay algo en el calendario (tareas, colaboraciones, cobros de abonos, reuniones, grabaciones…) te llega un aviso a la mañana para que no se te pase.',
+  desactivadas: 'Este dispositivo recibe un aviso todos los días a las 9:00 con lo que hay para hacer. Si no hay nada, te invita a entrar a la app.',
   activadas: 'Este dispositivo recibe un aviso a la mañana (alrededor de las 9) los días en que hay algo en el calendario. Si no hay nada, no manda nada.',
 }
 

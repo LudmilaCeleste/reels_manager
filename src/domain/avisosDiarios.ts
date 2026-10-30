@@ -30,19 +30,40 @@ export interface QueAvisar {
   urgentes: boolean
   /** Consultas de la web sin responder. */
   consultas: boolean
+  /** Si no hay nada que avisar, manda igual una invitación a entrar a la app (así hay aviso todos los días). */
+  insistir: boolean
 }
 
-export const avisosActivos: QueAvisar = { deHoy: true, deManana: false, recordatorios: false, urgentes: false, consultas: false }
+export const avisosActivos: QueAvisar = { deHoy: true, deManana: false, recordatorios: false, urgentes: false, consultas: false, insistir: true }
 
 const MAXIMO_LINEAS = 5
 
 const mismoDia = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 
+const invitaciones = [
+  'Hoy no hay tareas. Aprovechá para adelantar algo: ¿un reel nuevo, una propuesta o una nota?',
+  'Día tranquilo, sin tareas. Entrá a la app y dejá algo avanzado para los próximos días.',
+  'No hay nada para hoy. ¿Y si cargás un reel o revisás las cuentas de Instagram pendientes?',
+  'Hoy no hay tareas. Entrá a la app, mirá los abonos y las consultas y adelantá lo que puedas.',
+  'Sin tareas a la vista. Es buen momento para ordenar el calendario y planear la semana.',
+]
+
+/** Lo que se manda cuando no hay nada para hoy: invita a entrar a la app. Rota según el día para no repetirse siempre. */
+function invitacion(datos: DatosAvisos, hoy: Date): AvisoDiario {
+  const sinResponder = datos.consultas.filter((c) => c.estado === 'nueva').length
+  if (sinResponder > 0) {
+    const cuerpo = sinResponder === 1 ? 'Hoy no hay tareas, pero hay 1 consulta de la web sin responder. Entrá a la app y respondela.' : `Hoy no hay tareas, pero hay ${sinResponder} consultas de la web sin responder. Entrá a la app y respondelas.`
+    return { titulo: 'Buen día 👋', cuerpo, url: '/#/consultas' }
+  }
+  const diaDelAnio = Math.floor((hoy.getTime() - new Date(hoy.getFullYear(), 0, 0).getTime()) / 86_400_000)
+  return { titulo: 'Buen día 👋', cuerpo: invitaciones[diaDelAnio % invitaciones.length], url: '/#/tareas' }
+}
+
 /**
  * El aviso que se manda al teléfono todas las mañanas. Con la configuración
  * actual (`avisosActivos`) avisa lo que hay ese mismo día en el calendario, más
- * las tareas que vencen hoy aunque no estén en el calendario. Si no hay nada
- * que avisar, `null` (no se manda ninguna notificación).
+ * las tareas que vencen hoy aunque no estén en el calendario. Si no hay nada,
+ * invita a entrar a la app (o `null` si `insistir` está apagado: no se manda nada).
  */
 export function armarAvisoDiario(datos: DatosAvisos, hoy: Date, que: QueAvisar = avisosActivos): AvisoDiario | null {
   const manana = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 1)
@@ -83,7 +104,7 @@ export function armarAvisoDiario(datos: DatosAvisos, hoy: Date, que: QueAvisar =
     if (nuevas > 0) lineas.push(nuevas === 1 ? '1 consulta de la web sin responder' : `${nuevas} consultas de la web sin responder`)
   }
 
-  if (lineas.length === 0) return null
+  if (lineas.length === 0) return que.insistir ? invitacion(datos, hoy) : null
 
   const mostradas = lineas.slice(0, MAXIMO_LINEAS)
   if (lineas.length > MAXIMO_LINEAS) mostradas.push(`y ${lineas.length - MAXIMO_LINEAS} más`)
