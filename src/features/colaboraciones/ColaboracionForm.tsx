@@ -1,4 +1,4 @@
-import { Calendar, DollarSign } from 'lucide-react'
+import { Calendar, Euro } from 'lucide-react'
 import { useState } from 'react'
 import { useReels } from '../../data/useData'
 import { estados, etiquetaEstado } from '../../domain/colaboraciones'
@@ -84,7 +84,7 @@ function Formulario({ dialogo }: { dialogo: Dialogo<ValorColaboracion> }) {
         <Campo etiqueta="Precio" opcional ayuda="Acepta 15000, 15.000 o 15.000,50">
           {(id) => (
             <div className="relative">
-              <DollarSign className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-faint" />
+              <Euro className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-faint" />
               <Input id={id} value={precio} onChange={(e) => setPrecio(e.target.value)} inputMode="decimal" className="pl-10" />
             </div>
           )}

@@ -1,4 +1,4 @@
-import { Check, DollarSign } from 'lucide-react'
+import { Check, Euro } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { coloresAbono, colorAbonoPorDefecto } from '../../domain/colores'
@@ -62,7 +62,7 @@ function Formulario({ dialogo }: { dialogo: Dialogo<Abono> }) {
           <Campo etiqueta="Monto por mes">
             {(id) => (
               <div className="relative">
-                <DollarSign className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-faint" />
+                <Euro className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-faint" />
                 <Input id={id} value={monto} onChange={(e) => setMonto(e.target.value)} inputMode="decimal" className="pl-10" />
               </div>
             )}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { claveMes, diaIso, listaDeDias } from './dates'
 import { esLinkDeInstagramValido, normalizarUsuarioInstagram, urlEmbebidaReel } from './instagram'
-import { parsearMonto } from './money'
+import { formatearPrecio, parsearMonto } from './money'
 
 describe('parsearMonto', () => {
   it('acepta un número simple', () => {
@@ -25,9 +25,11 @@ describe('parsearMonto', () => {
     expect(parsearMonto('0.75')).toBe(0.75)
   })
 
-  it('ignora el signo de pesos y los espacios', () => {
+  it('ignora el signo de moneda ($ o €) y los espacios', () => {
     expect(parsearMonto('$ 15.000')).toBe(15000)
     expect(parsearMonto('$15000')).toBe(15000)
+    expect(parsearMonto('15.000 €')).toBe(15000)
+    expect(parsearMonto('€90,5')).toBe(90.5)
   })
 
   it('devuelve null si no es un número', () => {
@@ -83,3 +85,19 @@ describe('instagram', () => {
     expect(urlEmbebidaReel('https://www.instagram.com/reel/abc')).toBe('https://www.instagram.com/reel/abc/embed/captioned/')
   })
 })
+
+describe('formatearPrecio', () => {
+  const sinEspacios = (t: string) => t.replace(/\s/g, ' ')
+
+  it('formatea en euros, con punto para los miles', () => {
+    expect(sinEspacios(formatearPrecio(15000))).toBe('15.000 €')
+    expect(sinEspacios(formatearPrecio(1500))).toBe('1.500 €')
+    expect(sinEspacios(formatearPrecio(2690000))).toBe('2.690.000 €')
+    expect(sinEspacios(formatearPrecio(0))).toBe('0 €')
+  })
+
+  it('muestra los centavos solo si los hay', () => {
+    expect(sinEspacios(formatearPrecio(15000.5))).toBe('15.000,50 €')
+  })
+})
+

@@ -13,27 +13,27 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
   b.sembrar(COLECCION.colaboraciones, [
     {
       id: 'c1',
-      data: { nombreCliente: 'Bar Pepe', instagramCliente: 'barpepe', descripcion: 'Reel de la terraza + stories del finde', estado: 'pagada', precio: 120000, fecha: dia(3), notasCliente: 'Quieren mostrar el vermut de la casa', reelId: null },
+      data: { nombreCliente: 'Bar Pepe', instagramCliente: 'barpepe', descripcion: 'Reel de la terraza + stories del finde', estado: 'pagada', precio: 240, fecha: dia(3), notasCliente: 'Quieren mostrar el vermut de la casa', reelId: null },
     },
     {
       id: 'c2',
-      data: { nombreCliente: 'Hotel Mirador', instagramCliente: 'hotelmiradorsur', descripcion: 'Tour de habitaciones y spa para temporada alta', estado: 'publicada', precio: 250000, fecha: dia(-6), notasCliente: '', reelId: 'r2' },
+      data: { nombreCliente: 'Hotel Mirador', instagramCliente: 'hotelmiradorsur', descripcion: 'Tour de habitaciones y spa para temporada alta', estado: 'publicada', precio: 500, fecha: dia(-6), notasCliente: '', reelId: 'r2' },
     },
     {
       id: 'c3',
-      data: { nombreCliente: 'Restaurante La Brasa', instagramCliente: 'tapasybrasa', descripcion: 'Cocina abierta: 3 reels de platos estrella', estado: 'confirmada', precio: 180000, fecha: dia(9), notasCliente: 'Coordinar con el chef, martes a la tarde', reelId: null },
+      data: { nombreCliente: 'Restaurante La Brasa', instagramCliente: 'tapasybrasa', descripcion: 'Cocina abierta: 3 reels de platos estrella', estado: 'confirmada', precio: 360, fecha: dia(9), notasCliente: 'Coordinar con el chef, martes a la tarde', reelId: null },
     },
     {
       id: 'c4',
-      data: { nombreCliente: 'Estética Aura', instagramCliente: 'clinica.aura', descripcion: 'Promo de verano: antes y después', estado: 'confirmada', precio: 90000, fecha: null, notasCliente: '', reelId: null },
+      data: { nombreCliente: 'Estética Aura', instagramCliente: 'clinica.aura', descripcion: 'Promo de verano: antes y después', estado: 'confirmada', precio: 180, fecha: null, notasCliente: '', reelId: null },
     },
     {
       id: 'c5',
-      data: { nombreCliente: 'Beach Club Marea', instagramCliente: 'beachclubmarea', descripcion: 'Aftermovie de la fiesta de apertura', estado: 'pagada', precio: 300000, fecha: dia(15), notasCliente: 'Incluye drone', reelId: null },
+      data: { nombreCliente: 'Beach Club Marea', instagramCliente: 'beachclubmarea', descripcion: 'Aftermovie de la fiesta de apertura', estado: 'pagada', precio: 600, fecha: dia(15), notasCliente: 'Incluye drone', reelId: null },
     },
     {
       id: 'c6',
-      data: { nombreCliente: 'Barbería Don Nico', instagramCliente: 'barbershop.nico', descripcion: 'Reel de transformación + reseñas NFC', estado: 'confirmada', precio: 60000, fecha: dia(1), notasCliente: '', reelId: null },
+      data: { nombreCliente: 'Barbería Don Nico', instagramCliente: 'barbershop.nico', descripcion: 'Reel de transformación + reseñas NFC', estado: 'confirmada', precio: 120, fecha: dia(1), notasCliente: '', reelId: null },
     },
   ])
 
@@ -59,7 +59,7 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
         nombreCliente: 'Restaurante La Brasa',
         instagramCliente: 'tapasybrasa',
         descripcion: '12 videos al mes + gestión de redes',
-        montoMensual: 150000,
+        montoMensual: 300,
         diaCobro: 5,
         desde: mes(-3),
         color: 'naranja',
@@ -73,7 +73,7 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
         nombreCliente: 'Hotel Mirador',
         instagramCliente: 'hotelmiradorsur',
         descripcion: '8 videos + 20 stories al mes',
-        montoMensual: 280000,
+        montoMensual: 560,
         diaCobro: 1,
         desde: mes(-4),
         color: 'indigo',
@@ -87,7 +87,7 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
         nombreCliente: 'Estética Aura',
         instagramCliente: 'clinica.aura',
         descripcion: 'Contenido semanal',
-        montoMensual: 90000,
+        montoMensual: 180,
         diaCobro: 10,
         desde: mes(-2),
         color: 'verde',
@@ -97,7 +97,7 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
     },
     {
       id: 'a4',
-      data: { nombreCliente: 'Gimnasio Fuerza', instagramCliente: 'gym.fuerza', descripcion: 'Pausado hasta marzo', montoMensual: 70000, diaCobro: 15, desde: mes(-6), activo: false, mesesPagados: [claveMes(mes(-6)), claveMes(mes(-5))] },
+      data: { nombreCliente: 'Gimnasio Fuerza', instagramCliente: 'gym.fuerza', descripcion: 'Pausado hasta marzo', montoMensual: 140, diaCobro: 15, desde: mes(-6), activo: false, mesesPagados: [claveMes(mes(-6)), claveMes(mes(-5))] },
     },
   ])
 
@@ -200,7 +200,7 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
     { id: 'n2', data: { titulo: '', contenido: 'Llamar a Marina de Estética Aura el jueves.', actualizadaEn: hace(200) } },
     { id: 'n3', data: { titulo: 'Checklist de grabación', contenido: 'Batería cargada\nTarjeta de memoria libre\nLuz de relleno\nMicrófono de solapa\nTrípode\nPermiso del local para grabar clientes\nLista de planos acordada con el cliente\nRevisar que el local esté limpio y ordenado', actualizadaEn: hace(900) } },
     { id: 'n4', data: { titulo: 'Contraseña del wifi del estudio', contenido: 'La pegaron en el monitor, no hace falta anotarla acá.', actualizadaEn: hace(3000) } },
-    { id: 'n5', data: { titulo: 'Tarifas 2026', contenido: 'Reel suelto: $ 60.000\nPack de 3 reels: $ 160.000\nAbono mensual básico: $ 90.000\nAbono completo con gestión de redes: $ 280.000\nSesión con drone: + $ 40.000', actualizadaEn: hace(5200) } },
+    { id: 'n5', data: { titulo: 'Tarifas 2026', contenido: 'Reel suelto: 120 €\nPack de 3 reels: 320 €\nAbono mensual básico: 180 €\nAbono completo con gestión de redes: 560 €\nSesión con drone: + 80 €', actualizadaEn: hace(5200) } },
     { id: 'n6', data: { titulo: 'Para recordar', contenido: 'Pedir permisos de música antes de publicar.', actualizadaEn: hace(8000) } },
     { id: 'n7', data: { titulo: 'Plan de contenidos de noviembre', contenido: 'Semana 1: lanzamiento de la promo de verano\nSemana 2: casos de éxito de clientes (Hotel Mirador y Bar Pepe)\nSemana 3: detrás de cámaras y equipo\nSemana 4: cierre de mes con resultados y agradecimientos\n\nIdeas extra: sorteo en conjunto con un cliente, serie de tips para negocios locales, entrevista corta al chef de La Brasa.', actualizadaEn: hace(12000) } },
   ])
