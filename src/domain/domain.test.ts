@@ -263,3 +263,31 @@ describe('consultas de la web', () => {
     expect(decodeURIComponent(enlaceRespuesta(consulta('611223344', 'en')))).toContain('Hi Lucía!')
   })
 })
+
+describe('total cobrado de abonos (histórico)', () => {
+  const hoy = new Date(2026, 9, 15)
+
+  it('suma todos los meses pagados de todos los abonos, no solo el mes actual', () => {
+    const t = calcularTotalesAbonos(
+      [
+        abono({ id: '1', montoMensual: 100, desde: new Date(2026, 6, 1), mesesPagados: ['2026-07', '2026-08', '2026-09'] }),
+        abono({ id: '2', montoMensual: 50, desde: new Date(2026, 8, 1), mesesPagados: ['2026-10'] }),
+      ],
+      hoy,
+    )
+    expect(t.cobradoHistorico).toBe(350)
+    expect(t.mesesCobrados).toBe(4)
+    expect(t.cobradoMes).toBe(50)
+  })
+
+  it('lo ya cobrado cuenta aunque el abono esté pausado', () => {
+    const t = calcularTotalesAbonos([abono({ montoMensual: 200, activo: false, mesesPagados: ['2026-08', '2026-09'] })], hoy)
+    expect(t.cobradoHistorico).toBe(400)
+    expect(t.cantidadActivos).toBe(0)
+  })
+
+  it('sin pagos, cero', () => {
+    expect(calcularTotalesAbonos([abono()], hoy).cobradoHistorico).toBe(0)
+  })
+})
+

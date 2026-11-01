@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Clock, Hourglass, Repeat, TrendingUp, Wallet } from 'lucide-react'
+import { Clock, Coins, Hourglass, Repeat, TrendingUp, Wallet } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useAbonos, useColaboraciones } from '../../data/useData'
 import { calcularTotalesAbonos } from '../../domain/abonos'
@@ -12,9 +12,9 @@ import { Card } from '../../ui/Card'
 import { Avatar, EmptyState, ItemAnimado, ListaCargando, PageHeader, PrecioAnimado } from '../../ui/Pieces'
 
 /**
- * Resumen de plata: lo cobrado y lo pendiente de las colaboraciones puntuales
- * y de los abonos del mes. Se calcula a partir de los mismos datos, así que
- * se actualiza solo cuando algo cambia.
+ * Resumen de plata: el total generado (puntuales + abonos mensuales), y lo
+ * cobrado y pendiente de cada uno. Se calcula a partir de los mismos datos, así
+ * que se actualiza solo cuando algo cambia.
  */
 export function GananciasPage() {
   const { datos: colaboraciones, cargando } = useColaboraciones()
@@ -35,10 +35,46 @@ export function GananciasPage() {
   const conPrecio = lista.filter((c) => c.precio != null).sort((a, b) => (b.precio ?? 0) - (a.precio ?? 0))
   const maximo = conPrecio[0]?.precio ?? 1
   const porcentajeCobrado = totales.totalGeneral === 0 ? 0 : (totales.totalCobrado / totales.totalGeneral) * 100
+  const generadoAbonos = totalesAbonos.cobradoHistorico
+  const totalGenerado = totales.totalCobrado + generadoAbonos
+  const porCobrar = totales.totalPendiente + totalesAbonos.pendienteTotal
 
   return (
     <>
       <PageHeader titulo="Ganancias" icono={<Wallet />} subtitulo="Cuánto se cobró y cuánto falta cobrar" />
+
+      <Seccion titulo="Total generado" icono={<Coins className="size-4" />}>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+          <Tarjeta
+            tono="marca"
+            icono={<Coins />}
+            titulo="Total generado"
+            monto={totalGenerado}
+            detalle={
+              totalGenerado === 0
+                ? 'Todavía no hay nada cobrado. Acá va a aparecer todo lo que cobres entre colaboraciones puntuales y abonos mensuales.'
+                : 'Todo lo que ya cobraste: colaboraciones puntuales más abonos mensuales.'
+            }
+          />
+          <Composicion
+            filas={[
+              {
+                nombre: 'Colaboraciones puntuales',
+                monto: totales.totalCobrado,
+                detalle: `${totales.cantidadCobrado} cobrada${totales.cantidadCobrado === 1 ? '' : 's'}`,
+                color: 'var(--color-brand-600)',
+              },
+              {
+                nombre: 'Abonos mensuales',
+                monto: generadoAbonos,
+                detalle: `${totalesAbonos.mesesCobrados} ${totalesAbonos.mesesCobrados === 1 ? 'mes cobrado' : 'meses cobrados'}`,
+                color: 'var(--color-sky-500)',
+              },
+            ]}
+            porCobrar={porCobrar}
+          />
+        </div>
+      </Seccion>
 
       <Seccion titulo="Colaboraciones puntuales" icono={<TrendingUp className="size-4" />}>
         <div className="grid gap-4 md:grid-cols-2">
@@ -140,6 +176,61 @@ export function GananciasPage() {
         )}
       </Seccion>
     </>
+  )
+}
+
+interface FilaComposicion {
+  nombre: string
+  monto: number
+  detalle: string
+  color: string
+}
+
+/** De dónde sale el total generado: una barra dividida y el monto de cada parte, más lo que falta cobrar. */
+function Composicion({ filas, porCobrar }: { filas: FilaComposicion[]; porCobrar: number }) {
+  const total = filas.reduce((suma, f) => suma + f.monto, 0)
+  return (
+    <Card className="flex flex-col justify-center p-6">
+      <p className="text-sm font-bold text-ink">De dónde sale</p>
+
+      <div className="mt-3 flex h-3.5 overflow-hidden rounded-full bg-ink/8">
+        {total > 0 &&
+          filas.map((f, i) => (
+            <motion.div
+              key={f.nombre}
+              title={f.nombre}
+              style={{ backgroundColor: f.color }}
+              initial={{ width: 0 }}
+              animate={{ width: `${(f.monto / total) * 100}%` }}
+              transition={{ duration: 0.9, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+            />
+          ))}
+      </div>
+
+      <ul className="mt-4 space-y-3">
+        {filas.map((f) => (
+          <li key={f.nombre} className="flex items-center gap-3">
+            <span style={{ backgroundColor: f.color }} className="size-3 shrink-0 rounded-full" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-ink">{f.nombre}</p>
+              <p className="text-xs text-muted">
+                {f.detalle}
+                {total > 0 && ` · ${Math.round((f.monto / total) * 100)}%`}
+              </p>
+            </div>
+            <p className="shrink-0 text-base font-extrabold tracking-tight text-ink">{formatearPrecio(f.monto)}</p>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-4">
+        <span className="flex items-center gap-2 text-sm font-semibold text-muted">
+          <Hourglass className="size-4 text-amber-500" />
+          Todavía por cobrar
+        </span>
+        <span className="text-base font-extrabold tracking-tight text-amber-700 dark:text-amber-300">{formatearPrecio(porCobrar)}</span>
+      </div>
+    </Card>
   )
 }
 

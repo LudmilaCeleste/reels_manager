@@ -43,6 +43,10 @@ export interface TotalesAbonos {
   ingresoMensual: number
   cantidadActivos: number
   pendienteTotal: number
+  /** Todo lo cobrado desde siempre: cada mes marcado como pagado, de todos los abonos (también los pausados). */
+  cobradoHistorico: number
+  /** Cuántos meses pagados hay en total. */
+  mesesCobrados: number
 }
 
 export function calcularTotalesAbonos(abonos: Abono[], hoy: Date): TotalesAbonos {
@@ -53,8 +57,14 @@ export function calcularTotalesAbonos(abonos: Abono[], hoy: Date): TotalesAbonos
   let pendienteAnterior = 0
   let ingresoMensual = 0
   let cantidadActivos = 0
+  let cobradoHistorico = 0
+  let mesesCobrados = 0
 
   for (const abono of abonos) {
+    // Lo que ya se cobró cuenta siempre, aunque el abono esté pausado o recién termine.
+    cobradoHistorico += abono.montoMensual * abono.mesesPagados.length
+    mesesCobrados += abono.mesesPagados.length
+
     if (!abono.activo) continue
     // Un abono que arranca en un mes futuro todavía no cuenta.
     if (mesesDelAbono(abono, hoy).length === 0) continue
@@ -81,6 +91,8 @@ export function calcularTotalesAbonos(abonos: Abono[], hoy: Date): TotalesAbonos
     ingresoMensual,
     cantidadActivos,
     pendienteTotal: pendienteMes + pendienteAnterior,
+    cobradoHistorico,
+    mesesCobrados,
   }
 }
 
