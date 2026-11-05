@@ -12,7 +12,7 @@ import { Logo } from '../ui/Logo'
 import { Modal } from '../ui/Modal'
 import { Avatar, ListaCargando } from '../ui/Pieces'
 import { BannerRecordatorios } from '../features/tareas/BannerRecordatorios'
-import { useAvisosDelCalendario, useConsultasNuevas, useHoy, useRecordatoriosDeHoy, useTareasUrgentes } from './hooks'
+import { useAvisosDelCalendario, useConsultasNuevas, useHoy, useTareasUrgentes } from './hooks'
 import { rutasPrincipalesMovil, secciones, type ItemNav } from './nav'
 import { ThemeToggle } from './ThemeToggle'
 
@@ -34,7 +34,6 @@ export function Shell() {
   const { usuario, cerrarSesion } = useAuth()
   const urgentes = useTareasUrgentes()
   const consultasNuevas = useConsultasNuevas()
-  const avisos = useRecordatoriosDeHoy()
   const avisosCalendario = useAvisosDelCalendario()
   const hoy = useHoy()
   const [descartado, setDescartado] = useState<string | null>(null)
@@ -47,8 +46,8 @@ export function Shell() {
 
   // Cerrar el aviso lo oculta por hoy: mañana vuelve a avisar, y si aparece algo
   // nuevo en el calendario (otra firma) también se muestra de nuevo.
-  const firmaAvisos = `${hoy.getTime()}|${avisos.map((a) => a.regla.id).join(',')}|${avisosCalendario.map((a) => `${a.evento.id}:${a.cuando}`).join(',')}`
-  const mostrarAvisos = avisos.length + avisosCalendario.length > 0 && descartado !== firmaAvisos
+  const firmaAvisos = `${hoy.getTime()}|${avisosCalendario.map((a) => `${a.evento.id}:${a.cuando}`).join(',')}`
+  const mostrarAvisos = avisosCalendario.length > 0 && descartado !== firmaAvisos
   const conteos = { tareas: urgentes, consultas: consultasNuevas }
   const actual = secciones.find((s) => location.pathname.startsWith(s.ruta))
   // El calendario usa todo el ancho disponible; el resto de las secciones, un ancho cómodo de lectura.
@@ -114,9 +113,7 @@ export function Shell() {
               {mostrarAvisos && (
                 <BannerRecordatorios
                   key="avisos"
-                  avisos={avisos}
                   eventos={avisosCalendario}
-                  onVerTareas={() => navigate('/tareas')}
                   onVerCalendario={() => navigate('/calendario')}
                   onCerrar={() => setDescartado(firmaAvisos)}
                 />

@@ -86,8 +86,14 @@ export interface ReglaTarea {
   activa: boolean
   desde: Date
   generadaHasta: Date | null
-  /** Días de la semana (1 = lunes ... 7 = domingo) en que se avisa. */
+  /** Días de la semana (1 = lunes ... 7 = domingo) en que se avisa (ya no se usa en la pantalla; queda por los datos viejos). */
   diasRecordatorio: number[]
+  /**
+   * Solo semanal: los días de la semana (1 = lunes ... 7 = domingo) en que hay una tarea,
+   * una por día ("lunes, miércoles y viernes" → tres tareas, cada una para su día).
+   * Vacío = modo viejo: `cantidad` tareas que vencen todas el `diaLimite`.
+   */
+  diasSemana: number[]
 }
 
 export interface CuentaInstagram {

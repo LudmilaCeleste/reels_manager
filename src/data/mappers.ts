@@ -105,6 +105,19 @@ export const aTarea = ({ id, data: d }: Doc): Tarea => ({
 })
 export const deTarea = (t: Omit<Tarea, 'id'>): Datos => ({ ...t })
 
+const numeros = (v: unknown): number[] => lista(v).filter((n): n is number => typeof n === 'number')
+
+/**
+ * Los días de la semana de una regla semanal. Las reglas viejas no lo tienen: si "3 por semana" avisaba
+ * justo 3 días (por ejemplo lunes, miércoles y viernes), se entiende que esos son los días de cada tarea.
+ */
+function diasDeSemana(d: Datos, cantidad: number): number[] {
+  if (Array.isArray(d.diasSemana)) return [...new Set(numeros(d.diasSemana))].sort((a, b) => a - b)
+  const avisos = [...new Set(numeros(d.diasRecordatorio))].sort((a, b) => a - b)
+  const semanal = d.frecuencia !== 'mensual'
+  return semanal && cantidad > 1 && avisos.length === cantidad ? avisos : []
+}
+
 export const aRegla = ({ id, data: d }: Doc): ReglaTarea => ({
   id,
   titulo: texto(d.titulo),
@@ -117,7 +130,8 @@ export const aRegla = ({ id, data: d }: Doc): ReglaTarea => ({
   activa: booleano(d.activa, true),
   desde: fecha(d.desde) ?? new Date(),
   generadaHasta: fecha(d.generadaHasta),
-  diasRecordatorio: lista(d.diasRecordatorio).filter((n): n is number => typeof n === 'number'),
+  diasRecordatorio: numeros(d.diasRecordatorio),
+  diasSemana: diasDeSemana(d, numero(d.cantidad, 1)),
 })
 export const deRegla = (r: Omit<ReglaTarea, 'id'>): Datos => ({ ...r })
 

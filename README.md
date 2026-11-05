@@ -2,7 +2,7 @@
 
 App interna de la agencia, hecha como aplicación web: reels de Instagram, colaboraciones
 puntuales y **abonos mensuales**, ganancias (cobrado / pendiente), **tareas** (con
-automáticas semanales o mensuales y recordatorios), calendario del equipo, cuentas de
+automáticas por días de la semana o por mes), calendario del equipo, cuentas de
 Instagram, propuestas, consultas de la web y notas. Funciona en la compu y en el celular.
 
 Antes era una app de escritorio en Flutter. Ese código quedó archivado en la etiqueta
@@ -145,4 +145,16 @@ Los dispositivos que dejaron de recibir (app desinstalada) se dan de baja solos.
 Los dispositivos suscriptos se guardan en la colección `suscripciones_push` de Firestore (solo
 accesible para el equipo). La clave pública está en `src/config.ts`; si se cambia el par de
 claves hay que cambiarla también en el workflow y volver a activar cada dispositivo.
+
+## Tareas automáticas
+
+Una tarea automática crea tareas **normales** (sin etiqueta ni numeración) solas:
+
+- **Semanal**: se eligen los días (por ejemplo lunes, miércoles y viernes) y se crea una tarea para cada
+  uno, cada una con su fecha. Si la regla se arma a mitad de semana, no crea las de los días que ya pasaron.
+- **Mensual**: una cantidad de tareas para un día del mes.
+
+Al abrir la app se crean las que toquen. Al editar una regla, lo pendiente de la semana se rearma con la
+regla nueva (lo ya hecho no se toca). Las reglas viejas del tipo "3 por semana, avisar lunes, miércoles y
+viernes" se pasan solas a este formato la primera vez que se abre la app.
 

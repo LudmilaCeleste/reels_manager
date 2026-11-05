@@ -1,4 +1,4 @@
-import { diaIso, diasHasta } from '../lib/dates'
+import { diaIso, diasHasta, listaDeDias, nombresDiasSemana } from '../lib/dates'
 import type { FrecuenciaTarea, ReglaTarea, Tarea } from './types'
 
 export const etiquetaFrecuencia: Record<FrecuenciaTarea, string> = { semanal: 'Semanal', mensual: 'Mensual' }
@@ -57,6 +57,56 @@ export const prefijoIdTareasGeneradas = (reglaId: string, clave: string): string
  * dos veces no duplica nada.
  */
 export const idTareaGenerada = (reglaId: string, clave: string, numero: number): string => `${prefijoIdTareasGeneradas(reglaId, clave)}${numero}`
+
+/** Si la regla crea una tarea por cada día elegido de la semana (en vez de varias el mismo día). */
+export const esPorDiasDeLaSemana = (regla: ReglaTarea): boolean => regla.frecuencia === 'semanal' && regla.diasSemana.length > 0
+
+/** Id de la tarea de un día de la semana (1 = lunes ... 7 = domingo) de una regla, en un período. */
+export const idTareaDeDia = (reglaId: string, clave: string, dia: number): string => `${prefijoIdTareasGeneradas(reglaId, clave)}d${dia}`
+
+/** Una tarea que una regla tiene que crear en un período. */
+export interface TareaPlanificada {
+  id: string
+  titulo: string
+  fechaLimite: Date
+}
+
+/**
+ * Las tareas que una regla crea en un período. Las de días de la semana son
+ * normales: cada una con el título de la regla y su propio día. Las que ya
+ * pasaron antes de que la regla empezara no se crean (si la regla se arma un
+ * jueves, no aparecen las del lunes y el miércoles como atrasadas).
+ */
+export function tareasDelPeriodo(regla: ReglaTarea, periodo: PeriodoTarea): TareaPlanificada[] {
+  if (esPorDiasDeLaSemana(regla)) {
+    const desde = new Date(regla.desde.getFullYear(), regla.desde.getMonth(), regla.desde.getDate()).getTime()
+    return [...regla.diasSemana]
+      .sort((a, b) => a - b)
+      .map((dia) => ({
+        id: idTareaDeDia(regla.id, periodo.clave, dia),
+        titulo: regla.titulo,
+        fechaLimite: new Date(periodo.inicio.getFullYear(), periodo.inicio.getMonth(), periodo.inicio.getDate() + dia - 1),
+      }))
+      .filter((t) => t.fechaLimite.getTime() >= desde)
+  }
+
+  return Array.from({ length: regla.cantidad }, (_, i) => ({
+    id: idTareaGenerada(regla.id, periodo.clave, i + 1),
+    titulo: regla.cantidad === 1 ? regla.titulo : `${regla.titulo} (${i + 1}/${regla.cantidad})`,
+    fechaLimite: periodo.fechaLimite,
+  }))
+}
+
+/** Una frase que dice qué crea la regla: "Los lunes, miércoles y viernes" o "3 tareas por semana · vence el domingo". */
+export function resumenDeRegla(regla: ReglaTarea): string {
+  if (esPorDiasDeLaSemana(regla)) {
+    const frase = listaDeDias(regla.diasSemana)
+    return `${frase.charAt(0).toUpperCase()}${frase.slice(1)}: una tarea por día`
+  }
+  const vence =
+    regla.frecuencia === 'semanal' ? `el ${nombresDiasSemana[Math.min(7, Math.max(1, regla.diaLimite)) - 1].toLowerCase()}` : `el día ${regla.diaLimite}`
+  return `${regla.cantidad} ${regla.cantidad === 1 ? 'tarea' : 'tareas'} ${porPeriodo[regla.frecuencia]} · vence ${vence}`
+}
 
 /** El período (semana o mes) que está en curso en `hoy` para esa regla. */
 export function periodoActual(regla: ReglaTarea, hoy: Date): PeriodoTarea {

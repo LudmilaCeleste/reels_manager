@@ -1,4 +1,4 @@
-import { BellRing, CalendarDays, Repeat } from 'lucide-react'
+import { CalendarDays, Repeat } from 'lucide-react'
 import { useState } from 'react'
 import { etiquetaFrecuencia } from '../../domain/tareas'
 import { ErrorDeValidacion, type FrecuenciaTarea, type ReglaTarea } from '../../domain/types'
@@ -11,11 +11,19 @@ import { useToast } from '../../ui/Toast'
 import type { Dialogo } from '../../ui/useDialogo'
 
 /**
- * Alta y edición de una tarea automática (por ejemplo "3 videos por semana
- * para un bar"). Al guardarla se generan enseguida las tareas del período en curso.
+ * Alta y edición de una tarea automática. Semanal: se eligen los días y se crea una
+ * tarea normal para cada uno (por ejemplo lunes, miércoles y viernes). Mensual: una
+ * cantidad de tareas para un día del mes. Al guardarla se crean enseguida las del período en curso.
  */
 export function ReglaForm({ dialogo }: { dialogo: Dialogo<ReglaTarea> }) {
   return <Formulario key={dialogo.clave} dialogo={dialogo} />
+}
+
+/** Los días con los que arranca el formulario: los de la regla, o (si era "1 por semana") el día en que vencía. */
+function diasIniciales(existente: ReglaTarea | undefined): Set<number> {
+  if (!existente || existente.frecuencia !== 'semanal') return new Set()
+  if (existente.diasSemana.length > 0) return new Set(existente.diasSemana)
+  return existente.cantidad === 1 ? new Set([existente.diaLimite]) : new Set()
 }
 
 function Formulario({ dialogo }: { dialogo: Dialogo<ReglaTarea> }) {
@@ -23,20 +31,20 @@ function Formulario({ dialogo }: { dialogo: Dialogo<ReglaTarea> }) {
   const toast = useToast()
   const [titulo, setTitulo] = useState(existente?.titulo ?? '')
   const [cliente, setCliente] = useState(existente?.cliente ?? '')
-  const [cantidad, setCantidad] = useState(String(existente?.cantidad ?? 1))
   const [frecuencia, setFrecuencia] = useState<FrecuenciaTarea>(existente?.frecuencia ?? 'semanal')
-  const [diaSemana, setDiaSemana] = useState(existente?.frecuencia === 'semanal' ? existente.diaLimite : 7)
-  const [diaMes, setDiaMes] = useState(String(existente?.frecuencia === 'mensual' ? existente.diaLimite : 31))
+  const [dias, setDias] = useState<Set<number>>(() => diasIniciales(existente))
+  const [cantidad, setCantidad] = useState(String(existente?.frecuencia === 'mensual' ? existente.cantidad : 1))
+  const [diaMes, setDiaMes] = useState(String(existente?.frecuencia === 'mensual' ? existente.diaLimite : 28))
   const [descripcion, setDescripcion] = useState(existente?.descripcion ?? '')
   const [calendario, setCalendario] = useState(existente?.agregarAlCalendario ?? false)
-  const [dias, setDias] = useState<Set<number>>(new Set(existente?.diasRecordatorio ?? []))
 
   const n = Number(cantidad) || 1
-  const resumenBase =
+  const resumen =
     frecuencia === 'semanal'
-      ? `Cada semana se crean ${n} ${n === 1 ? 'tarea que vence' : 'tareas que vencen'} el ${nombresDiasSemana[diaSemana - 1].toLowerCase()}.`
-      : `Cada mes se crean ${n} ${n === 1 ? 'tarea que vence' : 'tareas que vencen'} el día ${Number(diaMes) || 31}.`
-  const resumen = dias.size === 0 ? resumenBase : `${resumenBase} Te avisamos ${listaDeDias(dias)} mientras falte algo.`
+      ? dias.size === 0
+        ? 'Elegí los días de la semana en que hay que hacerla.'
+        : `Cada semana se crea una tarea para ${listaDeDias(dias)}, cada una en su día.`
+      : `Cada mes se crean ${n} ${n === 1 ? 'tarea que vence' : 'tareas que vencen'} el día ${Number(diaMes) || 28}.`
 
   function alternarDia(dia: number) {
     setDias((actual) => {
@@ -48,14 +56,16 @@ function Formulario({ dialogo }: { dialogo: Dialogo<ReglaTarea> }) {
   }
 
   async function guardar() {
-    const cant = Number(cantidad)
-    if (!Number.isInteger(cant)) throw new ErrorDeValidacion('La cantidad tiene que ser un número entero')
-    const dia = frecuencia === 'semanal' ? diaSemana : Number(diaMes)
-    await guardarRegla(
-      { titulo, cliente, descripcion, cantidad: cant, frecuencia, diaLimite: dia, agregarAlCalendario: calendario, diasRecordatorio: [...dias] },
-      existente,
-    )
-    // Se generan enseguida las tareas del período en curso.
+    const datosBase = { titulo, cliente, descripcion, agregarAlCalendario: calendario, diasRecordatorio: [] as number[] }
+    if (frecuencia === 'semanal') {
+      const lista = [...dias].sort((a, b) => a - b)
+      await guardarRegla({ ...datosBase, frecuencia, cantidad: lista.length, diaLimite: lista[lista.length - 1] ?? 7, diasSemana: lista }, existente)
+    } else {
+      const cant = Number(cantidad)
+      if (!Number.isInteger(cant)) throw new ErrorDeValidacion('La cantidad tiene que ser un número entero')
+      await guardarRegla({ ...datosBase, frecuencia, cantidad: cant, diaLimite: Number(diaMes) }, existente)
+    }
+    // Se crean enseguida las tareas del período en curso.
     try {
       const creadas = await generarTareasRecurrentes()
       if (creadas > 0) toast.info(creadas === 1 ? 'Se creó 1 tarea para este período.' : `Se crearon ${creadas} tareas para este período.`)
@@ -70,7 +80,7 @@ function Formulario({ dialogo }: { dialogo: Dialogo<ReglaTarea> }) {
       onClose={dialogo.cerrar}
       size="lg"
       titulo={existente ? 'Editar tarea automática' : 'Nueva tarea automática'}
-      descripcion="Se crea sola cada semana o cada mes, sin que nadie tenga que acordarse."
+      descripcion="Se crea sola cada semana o cada mes, como una tarea normal, sin que nadie tenga que acordarse."
       etiquetaGuardar={existente ? 'Actualizar' : 'Guardar'}
       mensajeExito={existente ? 'Tarea automática actualizada' : 'Tarea automática guardada'}
       onSubmit={guardar}
@@ -84,61 +94,50 @@ function Formulario({ dialogo }: { dialogo: Dialogo<ReglaTarea> }) {
         </Campo>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Campo etiqueta="Cantidad">{(id) => <Input id={id} type="number" min={1} max={30} value={cantidad} onChange={(e) => setCantidad(e.target.value)} />}</Campo>
-        <Campo etiqueta="Se repite">
-          {(id) => (
-            <Select id={id} value={frecuencia} onChange={(e) => setFrecuencia(e.target.value as FrecuenciaTarea)}>
-              {(['semanal', 'mensual'] as const).map((f) => (
-                <option key={f} value={f}>
-                  {etiquetaFrecuencia[f]}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Campo>
-        {frecuencia === 'semanal' ? (
-          <Campo etiqueta="Vence el">
-            {(id) => (
-              <Select id={id} value={diaSemana} onChange={(e) => setDiaSemana(Number(e.target.value))}>
-                {nombresDiasSemana.map((nombre, i) => (
-                  <option key={nombre} value={i + 1}>
-                    {nombre}
-                  </option>
-                ))}
-              </Select>
+      <Campo etiqueta="Se repite">
+        {(id) => (
+          <Select id={id} value={frecuencia} onChange={(e) => setFrecuencia(e.target.value as FrecuenciaTarea)}>
+            {(['semanal', 'mensual'] as const).map((f) => (
+              <option key={f} value={f}>
+                {etiquetaFrecuencia[f]}
+              </option>
+            ))}
+          </Select>
+        )}
+      </Campo>
+
+      {frecuencia === 'semanal' ? (
+        <div>
+          <p className="mb-2 text-[13px] font-semibold text-ink">¿Qué días?</p>
+          <div className="flex flex-wrap gap-2">
+            {nombresDiasSemana.map((nombre, i) => (
+              <Ficha key={nombre} activa={dias.has(i + 1)} onClick={() => alternarDia(i + 1)}>
+                {nombre.slice(0, 3)}
+              </Ficha>
+            ))}
+          </div>
+          <div className="mt-2.5 flex flex-wrap gap-1">
+            <Button variante="suave" tamano="sm" onClick={() => setDias(new Set([1, 3, 5]))}>
+              Lunes, miércoles y viernes
+            </Button>
+            <Button variante="suave" tamano="sm" onClick={() => setDias(new Set([1, 2, 3, 4, 5]))}>
+              De lunes a viernes
+            </Button>
+            {dias.size > 0 && (
+              <Button variante="fantasma" tamano="sm" onClick={() => setDias(new Set())}>
+                Ninguno
+              </Button>
             )}
-          </Campo>
-        ) : (
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Campo etiqueta="Cantidad">{(id) => <Input id={id} type="number" min={1} max={30} value={cantidad} onChange={(e) => setCantidad(e.target.value)} />}</Campo>
           <Campo etiqueta="Día del mes" ayuda="En meses cortos, el último día">
             {(id) => <Input id={id} type="number" min={1} max={31} value={diaMes} onChange={(e) => setDiaMes(e.target.value)} />}
           </Campo>
-        )}
-      </div>
-
-      <div>
-        <p className="mb-2 flex items-center gap-2 text-[13px] font-semibold text-ink">
-          <BellRing className="size-4 text-brand-500" />
-          Recordarme estos días
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {nombresDiasSemana.map((nombre, i) => (
-            <Ficha key={nombre} activa={dias.has(i + 1)} onClick={() => alternarDia(i + 1)}>
-              {nombre.slice(0, 3)}
-            </Ficha>
-          ))}
         </div>
-        <div className="mt-2.5 flex gap-1">
-          <Button variante="suave" tamano="sm" onClick={() => setDias(new Set([1, 3, 5]))}>
-            Lunes, miércoles y viernes
-          </Button>
-          {dias.size > 0 && (
-            <Button variante="fantasma" tamano="sm" onClick={() => setDias(new Set())}>
-              Ninguno
-            </Button>
-          )}
-        </div>
-      </div>
+      )}
 
       <Campo etiqueta="Detalle" opcional ayuda="Se copia a cada tarea que se cree">
         {(id) => <Textarea id={id} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={2} className="min-h-[4.5rem]" />}

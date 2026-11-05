@@ -1,11 +1,11 @@
 import { AnimatePresence } from 'framer-motion'
-import { BellRing, CalendarDays, CheckCheck, ListChecks, Pencil, Repeat, Trash2, TriangleAlert } from 'lucide-react'
+import { CalendarDays, CheckCheck, ListChecks, Pencil, Repeat, Trash2, TriangleAlert } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useReglas, useTareas } from '../../data/useData'
-import { porPeriodo } from '../../domain/tareas'
+import { resumenDeRegla } from '../../domain/tareas'
 import type { ReglaTarea, Tarea } from '../../domain/types'
 import { cn } from '../../lib/cn'
-import { diasHasta, fechaConDia, listaDeDias, nombresDiasSemana } from '../../lib/dates'
+import { diasHasta, fechaConDia } from '../../lib/dates'
 import { cambiarActivaRegla, cambiarHechaTarea, eliminarRegla, eliminarTarea, eliminarTareasHechas, generarTareasRecurrentes } from '../../services/tareas'
 import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
@@ -231,11 +231,6 @@ function TarjetaTarea({ tarea, hoy, onEditar }: { tarea: Tarea; hoy: Date; onEdi
               {etiquetaFecha}
             </Badge>
           )}
-          {tarea.reglaId && (
-            <Badge tono="violeta" icono={<Repeat className="size-3.5" />}>
-              Automática
-            </Badge>
-          )}
           {tarea.agregarAlCalendario && <Badge tono="info">En el calendario</Badge>}
         </div>
       </div>
@@ -252,7 +247,6 @@ function TarjetaTarea({ tarea, hoy, onEditar }: { tarea: Tarea; hoy: Date; onEdi
 function TarjetaRegla({ regla, onEditar }: { regla: ReglaTarea; onEditar: () => void }) {
   const confirmar = useConfirmar()
   const toast = useToast()
-  const vence = regla.frecuencia === 'semanal' ? `el ${nombresDiasSemana[Math.min(7, Math.max(1, regla.diaLimite)) - 1].toLowerCase()}` : `el día ${regla.diaLimite}`
 
   async function alternar() {
     await cambiarActivaRegla(regla, !regla.activa)
@@ -288,18 +282,11 @@ function TarjetaRegla({ regla, onEditar }: { regla: ReglaTarea; onEditar: () => 
         />
       </div>
 
-      <p className="mt-4 text-sm font-semibold text-ink">
-        {regla.cantidad} {regla.cantidad === 1 ? 'tarea' : 'tareas'} {porPeriodo[regla.frecuencia]} <span className="font-normal text-muted">· vence {vence}</span>
-      </p>
+      <p className="mt-4 text-sm font-semibold text-ink">{resumenDeRegla(regla)}</p>
       {regla.descripcion && <p className="mt-1 text-sm text-muted">{regla.descripcion}</p>}
 
       <div className="mt-3.5 flex flex-wrap gap-1.5">
         {!regla.activa && <Badge>Pausada</Badge>}
-        {regla.diasRecordatorio.length > 0 && (
-          <Badge tono="marca" icono={<BellRing className="size-3.5" />}>
-            Avisa {listaDeDias(regla.diasRecordatorio)}
-          </Badge>
-        )}
         {regla.agregarAlCalendario && (
           <Badge tono="info" icono={<CalendarDays className="size-3.5" />}>
             En el calendario

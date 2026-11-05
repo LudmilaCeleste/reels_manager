@@ -116,6 +116,7 @@ const regla = (p: Partial<ReglaTarea> = {}): ReglaTarea => ({
   desde: new Date(2026, 9, 27),
   generadaHasta: null,
   diasRecordatorio: [],
+  diasSemana: [],
   ...p,
 })
 

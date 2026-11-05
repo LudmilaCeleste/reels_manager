@@ -102,8 +102,8 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
   ])
 
   // Las reglas automáticas generan sus tareas solas al abrir la app (lo corre App).
-  // Para que el recordatorio se vea hoy, se suma el día de la semana actual.
-  const diasAviso = [...new Set([1, 3, 5, diaIso(hoy)])].sort((x, y) => x - y)
+  // La semanal empieza el lunes de esta semana, así se ven sus tareas de cada día.
+  const lunesDeEstaSemana = dia(1 - diaIso(hoy))
   b.sembrar(COLECCION.reglas, [
     {
       id: 'g1',
@@ -111,14 +111,15 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
         titulo: 'Video para Bar Pepe',
         cantidad: 3,
         frecuencia: 'semanal',
-        diaLimite: 7,
+        diaLimite: 5,
         cliente: 'Bar Pepe',
         descripcion: 'Un video por visita: terraza, barra y platos',
         agregarAlCalendario: true,
         activa: true,
-        desde: dia(-1),
+        desde: lunesDeEstaSemana,
         generadaHasta: null,
-        diasRecordatorio: diasAviso,
+        diasRecordatorio: [],
+        diasSemana: [1, 3, 5],
       },
     },
     {
@@ -132,9 +133,10 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
         descripcion: '',
         agregarAlCalendario: false,
         activa: true,
-        desde: dia(-1),
+        desde: lunesDeEstaSemana,
         generadaHasta: null,
-        diasRecordatorio: [5],
+        diasRecordatorio: [],
+        diasSemana: [5],
       },
     },
     {
@@ -151,6 +153,7 @@ export function crearBackendDemo(hoy: Date = new Date()): MemoryBackend {
         desde: dia(-1),
         generadaHasta: null,
         diasRecordatorio: [],
+        diasSemana: [],
       },
     },
   ])

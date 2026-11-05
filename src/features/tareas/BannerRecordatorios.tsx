@@ -2,41 +2,27 @@ import { motion } from 'framer-motion'
 import { BellRing, X } from 'lucide-react'
 import type { AvisoEvento } from '../../domain/eventos'
 import { etiquetaTipoEvento, tipoDeEvento } from '../../domain/eventos'
-import type { RecordatorioTarea } from '../../domain/tareas'
 import { Button, IconButton } from '../../ui/Button'
 import { useColorDeEvento } from '../../app/hooks'
 import { estiloPastilla } from '../../ui/estilosEvento'
 
 interface Props {
-  /** Tareas automáticas a las que hoy les toca recordatorio. */
-  avisos: RecordatorioTarea[]
   /** Lo del calendario que pasa hoy o mañana. */
   eventos: AvisoEvento[]
-  onVerTareas: () => void
   onVerCalendario: () => void
   onCerrar: () => void
 }
 
 /**
- * Aviso que aparece arriba de todo: los recordatorios de las tareas
- * automáticas ("Video para Bar Pepe: faltan 2 de 3 esta semana") y lo que hay
- * en el calendario para hoy y para mañana, un día antes y el mismo día.
+ * Aviso que aparece arriba de todo: lo que hay en el calendario para hoy y para
+ * mañana, un día antes y el mismo día.
  */
-export function BannerRecordatorios({ avisos, eventos, onVerTareas, onVerCalendario, onCerrar }: Props) {
+export function BannerRecordatorios({ eventos, onVerCalendario, onCerrar }: Props) {
   const colorDe = useColorDeEvento()
   const acciones = (
-    <>
-      {avisos.length > 0 && (
-        <Button variante="suave" tamano="sm" onClick={onVerTareas}>
-          Ver tareas
-        </Button>
-      )}
-      {eventos.length > 0 && (
-        <Button variante="suave" tamano="sm" onClick={onVerCalendario}>
-          Ver calendario
-        </Button>
-      )}
-    </>
+    <Button variante="suave" tamano="sm" onClick={onVerCalendario}>
+      Ver calendario
+    </Button>
   )
 
   return (
@@ -70,11 +56,6 @@ export function BannerRecordatorios({ avisos, eventos, onVerTareas, onVerCalenda
                 </li>
               )
             })}
-            {avisos.map((aviso) => (
-              <li key={aviso.regla.id} className="text-sm text-muted">
-                {aviso.texto}
-              </li>
-            ))}
           </ul>
           <div className="mt-2.5 flex flex-wrap gap-1.5 sm:hidden">{acciones}</div>
         </div>

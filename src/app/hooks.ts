@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useAbonos, useConsultas, useEventos, useReglas, useTareas } from '../data/useData'
+import { useAbonos, useConsultas, useEventos, useTareas } from '../data/useData'
 import { cobrosComoEventos } from '../domain/abonos'
 import { avisosDelCalendario } from '../domain/eventos'
-import { recordatoriosDeHoy, esUrgente } from '../domain/tareas'
+import { esUrgente } from '../domain/tareas'
 import type { EventoCalendario } from '../domain/types'
 import { colorDeEvento, type ColorEvento } from '../ui/estilosEvento'
 
@@ -57,12 +57,4 @@ export function useAvisosDelCalendario() {
 export function useColorDeEvento(): (evento: EventoCalendario) => ColorEvento {
   const { datos } = useAbonos()
   return useCallback((evento) => colorDeEvento(evento, datos ?? []), [datos])
-}
-
-/** Los avisos de hoy: qué reglas automáticas toca recordar y cuánto falta de cada una. */
-export function useRecordatoriosDeHoy() {
-  const { datos: reglas } = useReglas()
-  const { datos: tareas } = useTareas()
-  const hoy = useHoy()
-  return useMemo(() => recordatoriosDeHoy(reglas ?? [], tareas ?? [], hoy), [reglas, tareas, hoy])
 }

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { backend, setBackend } from '../data/backend'
-import { aEvento, aTarea, COLECCION } from '../data/mappers'
+import { aEvento, aRegla, aTarea, COLECCION } from '../data/mappers'
 import { MemoryBackend } from '../data/memoryBackend'
 import { idTareaGenerada } from '../domain/tareas'
 import { ErrorDeValidacion, type CuentaInstagram, type ReglaTarea } from '../domain/types'
@@ -77,11 +77,12 @@ describe('tareas automáticas', () => {
     const [primera] = await tareas()
     await cambiarHechaTarea(primera, true)
 
-    // Se edita la regla: la generación arranca de nuevo y recorre el período entero.
+    // Se edita la regla: lo pendiente de la semana se rearma (las 2 que faltaban), y la hecha no se toca.
     const [reglaGuardada] = await reglas()
     await guardarRegla({ ...datosRegla, descripcion: 'x' }, { id: reglaGuardada.id } as ReglaTarea, martes)
 
-    expect(await generarTareasRecurrentes(martes)).toBe(0)
+    expect(await generarTareasRecurrentes(martes)).toBe(2)
+    expect(await tareas()).toHaveLength(3)
     expect((await tareas()).find((t) => t.id === primera.id)?.hecha).toBe(true)
   })
 
@@ -221,3 +222,114 @@ describe('eventos del calendario', () => {
     await expect(guardarEvento({ ...base, titulo: '  ', tipo: 'evento' })).rejects.toBeInstanceOf(ErrorDeValidacion)
   })
 })
+
+describe('tareas automáticas por días de la semana', () => {
+  const lunes = new Date(2026, 9, 26, 9)
+  const miercoles = new Date(2026, 9, 28, 9)
+  const porDias = { ...datosRegla, diasSemana: [1, 3, 5] }
+  const conFecha = async () => (await tareas()).map((t) => [t.titulo, t.fechaLimite?.getDate()] as const).sort((a, b) => (a[1] ?? 0) - (b[1] ?? 0))
+
+  it('crea una tarea normal para cada día elegido, sin numerar', async () => {
+    await guardarRegla(porDias, undefined, lunes)
+    expect(await generarTareasRecurrentes(lunes)).toBe(3)
+    expect(await conFecha()).toEqual([
+      ['Video para Bar Pepe', 26],
+      ['Video para Bar Pepe', 28],
+      ['Video para Bar Pepe', 30],
+    ])
+  })
+
+  it('si la regla se arma a mitad de semana, no crea las de los días que ya pasaron', async () => {
+    await guardarRegla(porDias, undefined, miercoles)
+    expect(await generarTareasRecurrentes(miercoles)).toBe(2)
+    expect((await conFecha()).map(([, dia]) => dia)).toEqual([28, 30])
+  })
+
+  it('la semana siguiente crea las de todos los días, y correr dos veces no duplica', async () => {
+    await guardarRegla(porDias, undefined, lunes)
+    await generarTareasRecurrentes(lunes)
+    const lunesSiguiente = new Date(2026, 10, 2, 9)
+    expect(await generarTareasRecurrentes(lunesSiguiente)).toBe(3)
+    expect(await generarTareasRecurrentes(lunesSiguiente)).toBe(0)
+    expect(await tareas()).toHaveLength(6)
+  })
+
+  it('deduce la cantidad y el día límite de los días elegidos', async () => {
+    await guardarRegla({ ...porDias, cantidad: 9, diaLimite: 2 }, undefined, lunes)
+    const [r] = (await reglas()).map(aRegla)
+    expect(r).toMatchObject({ cantidad: 3, diaLimite: 5, diasSemana: [1, 3, 5] })
+  })
+
+  it('exige al menos un día y que sean válidos', async () => {
+    await expect(guardarRegla({ ...datosRegla, diasSemana: [] })).rejects.toBeInstanceOf(ErrorDeValidacion)
+    await expect(guardarRegla({ ...datosRegla, diasSemana: [0] })).rejects.toBeInstanceOf(ErrorDeValidacion)
+    await expect(guardarRegla({ ...datosRegla, diasSemana: [8] })).rejects.toBeInstanceOf(ErrorDeValidacion)
+  })
+
+  it('al editar los días, se rearman las pendientes y se conserva lo hecho', async () => {
+    await guardarRegla(porDias, undefined, lunes)
+    await generarTareasRecurrentes(lunes)
+    const hecha = (await tareas()).find((t) => t.fechaLimite?.getDate() === 26)!
+    await cambiarHechaTarea(hecha, true)
+
+    const [r] = await reglas()
+    await guardarRegla({ ...datosRegla, diasSemana: [4] }, { id: r.id } as ReglaTarea, new Date(2026, 9, 27, 9))
+    await generarTareasRecurrentes(new Date(2026, 9, 27, 9))
+
+    expect((await conFecha()).map(([, dia]) => dia)).toEqual([26, 29]) // la hecha del lunes y la nueva del jueves
+  })
+
+  it('una regla mensual no cambia', async () => {
+    await guardarRegla({ ...datosRegla, frecuencia: 'mensual', diaLimite: 28, cantidad: 2, diasSemana: [1, 3] }, undefined, lunes)
+    expect(await generarTareasRecurrentes(lunes)).toBe(2)
+    expect((await tareas()).map((t) => t.titulo).sort()).toEqual(['Video para Bar Pepe (1/2)', 'Video para Bar Pepe (2/2)'])
+  })
+})
+
+describe('reglas anteriores a los días de la semana', () => {
+  const miercoles = new Date(2026, 9, 28, 9)
+  const domingo = new Date(2026, 10, 1)
+
+  const sembrarReglaVieja = async (diasRecordatorio: number[]) => {
+    await backend().set(COLECCION.reglas, 'vieja', {
+      titulo: 'Videos Wiccao', cantidad: 3, frecuencia: 'semanal', diaLimite: 7, cliente: 'Wiccao', descripcion: '', agregarAlCalendario: false, activa: true,
+      desde: new Date(2026, 9, 26), generadaHasta: new Date(2026, 9, 26), diasRecordatorio,
+    })
+    for (const n of [1, 2, 3]) {
+      await backend().set(COLECCION.tareas, `regla-vieja-2026-10-26-${n}`, {
+        titulo: `Videos Wiccao (${n}/3)`, descripcion: '', cliente: 'Wiccao', fechaLimite: domingo, hecha: false, agregarAlCalendario: false, reglaId: 'vieja', creadaEn: new Date(2026, 9, 26),
+      })
+    }
+  }
+
+  it('"3 por semana" avisando lunes, miércoles y viernes pasa a una tarea por día', () => {
+    expect(aRegla({ id: 'x', data: { cantidad: 3, frecuencia: 'semanal', diasRecordatorio: [5, 1, 3] } }).diasSemana).toEqual([1, 3, 5])
+  })
+
+  it('si los días avisados no coinciden con la cantidad, queda como estaba', () => {
+    expect(aRegla({ id: 'x', data: { cantidad: 3, frecuencia: 'semanal', diasRecordatorio: [1, 3] } }).diasSemana).toEqual([])
+    expect(aRegla({ id: 'x', data: { cantidad: 1, frecuencia: 'semanal', diasRecordatorio: [1] } }).diasSemana).toEqual([])
+    expect(aRegla({ id: 'x', data: { cantidad: 3, frecuencia: 'mensual', diasRecordatorio: [1, 3, 5] } }).diasSemana).toEqual([])
+  })
+
+  it('al abrir la app se migra sola: sacan las "(1/3)" pendientes y quedan las de cada día que falta', async () => {
+    await sembrarReglaVieja([1, 3, 5])
+
+    expect(await generarTareasRecurrentes(miercoles)).toBe(2) // miércoles y viernes (el lunes ya pasó)
+    const lista = await tareas()
+    expect(lista.map((t) => t.titulo)).toEqual(['Videos Wiccao', 'Videos Wiccao'])
+    expect(lista.map((t) => t.fechaLimite?.getDate()).sort()).toEqual([28, 30])
+
+    const [r] = (await reglas()).map(aRegla)
+    expect(r.diasSemana).toEqual([1, 3, 5])
+    expect(await generarTareasRecurrentes(miercoles)).toBe(0) // no se repite
+    expect(await tareas()).toHaveLength(2)
+  })
+
+  it('una regla vieja que no se puede pasar a días queda igual que antes', async () => {
+    await sembrarReglaVieja([])
+    await generarTareasRecurrentes(miercoles)
+    expect((await tareas()).map((t) => t.titulo).sort()).toEqual(['Videos Wiccao (1/3)', 'Videos Wiccao (2/3)', 'Videos Wiccao (3/3)'])
+  })
+})
+

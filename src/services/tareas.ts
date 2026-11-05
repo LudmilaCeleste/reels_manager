@@ -1,6 +1,6 @@
 import { backend } from '../data/backend'
-import { aRegla, COLECCION, deRegla, deTarea } from '../data/mappers'
-import { idTareaGenerada, periodosPendientes, type PeriodoTarea } from '../domain/tareas'
+import { aRegla, aTarea, COLECCION, deRegla, deTarea } from '../data/mappers'
+import { esPorDiasDeLaSemana, inicioDePeriodo, periodosPendientes, tareasDelPeriodo } from '../domain/tareas'
 import { ErrorDeValidacion, type FrecuenciaTarea, type ReglaTarea, type Tarea } from '../domain/types'
 import { nuevoId } from '../lib/ids'
 import { eliminarEvento, guardarEventoConId } from './calendario'
@@ -87,6 +87,27 @@ export interface DatosRegla {
   descripcion: string
   agregarAlCalendario: boolean
   diasRecordatorio: number[]
+  /**
+   * Solo semanal: los días de la semana (1 = lunes ... 7 = domingo) con una tarea cada uno.
+   * Si se manda (aunque sea vacío) manda sobre `cantidad` y `diaLimite`.
+   */
+  diasSemana?: number[]
+}
+
+/**
+ * Borra las tareas pendientes de una regla del período en curso en adelante (y sus eventos del
+ * calendario), para que se vuelvan a crear según cómo quedó la regla. Las hechas y las de
+ * períodos anteriores no se tocan.
+ */
+async function quitarPendientesDeLaRegla(reglaId: string, frecuencia: FrecuenciaTarea, ahora: Date): Promise<void> {
+  const b = backend()
+  const inicio = inicioDePeriodo(frecuencia, ahora).getTime()
+  const pendientes = (await b.getAll(COLECCION.tareas))
+    .map(aTarea)
+    .filter((t) => t.reglaId === reglaId && !t.hecha && (t.fechaLimite === null || t.fechaLimite.getTime() >= inicio))
+  if (pendientes.length === 0) return
+  await b.removeMany(COLECCION.tareas, pendientes.map((t) => t.id))
+  for (const t of pendientes.filter((t) => t.agregarAlCalendario)) await eliminarEvento(idEventoDeTarea(t.id))
 }
 
 /**
@@ -96,29 +117,43 @@ export interface DatosRegla {
  */
 export async function guardarRegla(datos: DatosRegla, existente?: ReglaTarea, ahora: Date = new Date()): Promise<void> {
   if (datos.titulo.trim() === '') throw new ErrorDeValidacion('Poné qué hay que hacer')
-  if (!Number.isInteger(datos.cantidad) || datos.cantidad < 1 || datos.cantidad > 30) {
-    throw new ErrorDeValidacion('La cantidad tiene que ser entre 1 y 30')
-  }
-  const maximoDia = datos.frecuencia === 'semanal' ? 7 : 31
-  if (!Number.isInteger(datos.diaLimite) || datos.diaLimite < 1 || datos.diaLimite > maximoDia) {
-    throw new ErrorDeValidacion(`El día límite tiene que ser entre 1 y ${maximoDia}`)
-  }
   if (datos.diasRecordatorio.some((d) => !Number.isInteger(d) || d < 1 || d > 7)) {
     throw new ErrorDeValidacion('Los días de recordatorio van de lunes a domingo')
   }
+
+  const dias = datos.frecuencia === 'semanal' && datos.diasSemana !== undefined ? [...new Set(datos.diasSemana)].sort((a, b) => a - b) : undefined
+  let cantidad = datos.cantidad
+  let diaLimite = datos.diaLimite
+  if (dias !== undefined) {
+    if (dias.length === 0) throw new ErrorDeValidacion('Elegí al menos un día de la semana')
+    if (dias.some((d) => !Number.isInteger(d) || d < 1 || d > 7)) throw new ErrorDeValidacion('Los días van de lunes a domingo')
+    // Una tarea por día elegido: la cantidad y el día límite quedan deducidos de ahí.
+    cantidad = dias.length
+    diaLimite = dias[dias.length - 1]
+  } else {
+    if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > 30) throw new ErrorDeValidacion('La cantidad tiene que ser entre 1 y 30')
+    const maximoDia = datos.frecuencia === 'semanal' ? 7 : 31
+    if (!Number.isInteger(diaLimite) || diaLimite < 1 || diaLimite > maximoDia) {
+      throw new ErrorDeValidacion(`El día límite tiene que ser entre 1 y ${maximoDia}`)
+    }
+  }
+
+  // Al editar, lo pendiente de este período se rearma con la regla nueva (lo hecho queda).
+  if (existente) await quitarPendientesDeLaRegla(existente.id, datos.frecuencia, ahora)
 
   await backend().set(
     COLECCION.reglas,
     existente?.id ?? nuevoId(),
     deRegla({
       titulo: datos.titulo.trim(),
-      cantidad: datos.cantidad,
+      cantidad,
       frecuencia: datos.frecuencia,
-      diaLimite: datos.diaLimite,
+      diaLimite,
       cliente: datos.cliente.trim(),
       descripcion: datos.descripcion.trim(),
       agregarAlCalendario: datos.agregarAlCalendario,
       diasRecordatorio: [...new Set(datos.diasRecordatorio)].sort((a, b) => a - b),
+      diasSemana: dias ?? [],
       activa: existente?.activa ?? true,
       desde: soloFecha(ahora),
       generadaHasta: null,
@@ -143,20 +178,6 @@ export async function eliminarRegla(id: string): Promise<void> {
   await backend().remove(COLECCION.reglas, id)
 }
 
-function armarTarea(regla: ReglaTarea, periodo: PeriodoTarea, numero: number, hoy: Date): Tarea {
-  return {
-    id: idTareaGenerada(regla.id, periodo.clave, numero),
-    titulo: regla.cantidad === 1 ? regla.titulo : `${regla.titulo} (${numero}/${regla.cantidad})`,
-    descripcion: regla.descripcion,
-    cliente: regla.cliente,
-    fechaLimite: periodo.fechaLimite,
-    hecha: false,
-    agregarAlCalendario: regla.agregarAlCalendario,
-    reglaId: regla.id,
-    creadaEn: hoy,
-  }
-}
-
 /**
  * Crea las tareas que les tocan a las reglas automáticas activas (las de la
  * semana o el mes en curso y, si la app estuvo cerrada un tiempo, las de los
@@ -170,11 +191,27 @@ function armarTarea(regla: ReglaTarea, periodo: PeriodoTarea, numero: number, ho
  */
 export async function generarTareasRecurrentes(ahora: Date = new Date()): Promise<number> {
   const b = backend()
-  const reglas = (await b.getAll(COLECCION.reglas)).map(aRegla)
+  const docs = await b.getAll(COLECCION.reglas)
   let creadas = 0
 
-  for (const regla of reglas) {
+  for (const doc of docs) {
+    let regla = aRegla(doc)
     if (!regla.activa) continue
+
+    // Reglas anteriores a los "días de la semana" (por ejemplo "3 por semana, lunes, miércoles y
+    // viernes"): se pasan solas al modo nuevo, una tarea por día, y se rearma lo pendiente de la semana.
+    if (!Array.isArray(doc.data.diasSemana) && esPorDiasDeLaSemana(regla)) {
+      try {
+        await quitarPendientesDeLaRegla(regla.id, regla.frecuencia, ahora)
+        const migrada = { ...regla, cantidad: regla.diasSemana.length, diaLimite: regla.diasSemana[regla.diasSemana.length - 1], desde: soloFecha(ahora), generadaHasta: null }
+        const { id, ...resto } = migrada
+        await b.set(COLECCION.reglas, id, deRegla(resto))
+        regla = migrada
+      } catch {
+        continue
+      }
+    }
+
     const periodos = periodosPendientes(regla, ahora)
     if (periodos.length === 0) continue
 
@@ -182,8 +219,18 @@ export async function generarTareasRecurrentes(ahora: Date = new Date()): Promis
     // reintenta la próxima vez que se abra la app.
     try {
       for (const periodo of periodos) {
-        for (let numero = 1; numero <= regla.cantidad; numero++) {
-          const tarea = armarTarea(regla, periodo, numero, ahora)
+        for (const plan of tareasDelPeriodo(regla, periodo)) {
+          const tarea: Tarea = {
+            id: plan.id,
+            titulo: plan.titulo,
+            descripcion: regla.descripcion,
+            cliente: regla.cliente,
+            fechaLimite: plan.fechaLimite,
+            hecha: false,
+            agregarAlCalendario: regla.agregarAlCalendario,
+            reglaId: regla.id,
+            creadaEn: ahora,
+          }
           const { id, ...resto } = tarea
           if (await b.createIfMissing(COLECCION.tareas, id, deTarea(resto))) {
             creadas++
